@@ -1,0 +1,42 @@
+{
+  "kind": "collectionType",
+  "collectionName": "goals",
+  "info": {
+    "singularName": "goal",
+    "pluralName": "goals",
+    "displayName": "goal"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "users_permissions_user": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "plugin::users-permissions.user",
+      "inversedBy": "goals"
+    },
+    "goaltype": {
+      "type": "string"
+    },
+    "state": {
+      "type": "string"
+    },
+    "reviewDate": {
+      "type": "date"
+    },
+    "detail": {
+      "type": "text"
+    },
+    "days": {
+      "type": "integer"
+    },
+    "minutes": {
+      "type": "integer"
+    },
+    "outcome": {
+      "type": "string"
+    }
+  }
+}

@@ -1,0 +1,42 @@
+{
+  "kind": "collectionType",
+  "collectionName": "profilers",
+  "info": {
+    "singularName": "profiler",
+    "pluralName": "profilers",
+    "displayName": "profiler"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "user": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "plugin::users-permissions.user",
+      "inversedBy": "profilers"
+    },
+    "dueDate": {
+      "type": "date"
+    },
+    "dateComplete": {
+      "type": "date"
+    },
+    "result": {
+      "type": "string"
+    },
+    "concernAreas": {
+      "type": "string"
+    },
+    "concernSpecifics": {
+      "type": "string"
+    },
+    "reminderDate": {
+      "type": "date"
+    },
+    "reason": {
+      "type": "string"
+    }
+  }
+}
