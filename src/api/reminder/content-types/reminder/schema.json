@@ -16,6 +16,24 @@
       "relation": "manyToOne",
       "target": "plugin::users-permissions.user",
       "inversedBy": "reminders"
+    },
+    "type": {
+      "type": "string"
+    },
+    "frequency": {
+      "type": "string"
+    },
+    "start": {
+      "type": "date"
+    },
+    "lastSent": {
+      "type": "date"
+    },
+    "method": {
+      "type": "string"
+    },
+    "reminder_type": {
+      "type": "string"
     }
   }
 }

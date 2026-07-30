@@ -1,0 +1,42 @@
+{
+  "kind": "collectionType",
+  "collectionName": "side_effects",
+  "info": {
+    "singularName": "side-effect",
+    "pluralName": "side-effects",
+    "displayName": "side_effect"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "type": {
+      "type": "string"
+    },
+    "description": {
+      "type": "text"
+    },
+    "frequency": {
+      "type": "string"
+    },
+    "severity": {
+      "type": "string"
+    },
+    "impact": {
+      "type": "string"
+    },
+    "notes": {
+      "type": "text"
+    },
+    "date": {
+      "type": "date"
+    },
+    "user": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "plugin::users-permissions.user",
+      "inversedBy": "side_effects"
+    }
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "kind": "collectionType",
+  "collectionName": "thoughts",
+  "info": {
+    "singularName": "thought",
+    "pluralName": "thoughts",
+    "displayName": "thought"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "path": {
+      "type": "string"
+    },
+    "negative": {
+      "type": "string"
+    },
+    "positive": {
+      "type": "string"
+    },
+    "user": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "plugin::users-permissions.user",
+      "inversedBy": "thoughts"
+    }
+  }
+}

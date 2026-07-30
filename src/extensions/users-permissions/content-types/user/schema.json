@@ -113,6 +113,36 @@
       "relation": "oneToMany",
       "target": "api::favourite.favourite",
       "mappedBy": "user"
+    },
+    "notes": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::note.note",
+      "mappedBy": "user"
+    },
+    "adherances": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::adherance.adherance",
+      "mappedBy": "user"
+    },
+    "side_effects": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::side-effect.side-effect",
+      "mappedBy": "user"
+    },
+    "plans": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::plan.plan",
+      "mappedBy": "user"
+    },
+    "thoughts": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::thought.thought",
+      "mappedBy": "user"
     }
   }
 }

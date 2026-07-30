@@ -37,6 +37,9 @@
     },
     "outcome": {
       "type": "string"
+    },
+    "twenty_one_day_option": {
+      "type": "integer"
     }
   }
 }
