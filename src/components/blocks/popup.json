@@ -1,9 +1,9 @@
 {
   "collectionName": "components_blocks_popups",
   "info": {
-    "displayName": "popup"
+    "displayName": "Popup",
+    "icon": "layer"
   },
-  "options": {},
   "attributes": {
     "name_key": {
       "type": "string"
@@ -12,22 +12,15 @@
       "type": "string"
     },
     "size": {
-      "type": "enumeration",
-      "enum": [
-        "sm",
-        "md",
-        "lg",
-        "xl"
-      ]
+      "type": "string"
     },
     "body": {
       "type": "richtext"
     },
     "quotes": {
       "type": "component",
-      "component": "component.quotes",
-      "repeatable": true
+      "repeatable": true,
+      "component": "components.quote"
     }
-  },
-  "config": {}
+  }
 }

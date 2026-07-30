@@ -1,21 +1,15 @@
 {
   "collectionName": "components_blocks_markdowns",
   "info": {
-    "displayName": "markdown"
+    "displayName": "Markdown",
+    "icon": "file"
   },
-  "options": {},
   "attributes": {
     "text": {
       "type": "richtext"
     },
     "encoding": {
-      "type": "enumeration",
-      "enum": [
-        "plain",
-        "lz-string:B64",
-        "lz:string:UTF16"
-      ]
+      "type": "string"
     }
-  },
-  "config": {}
+  }
 }

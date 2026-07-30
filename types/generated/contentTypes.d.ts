@@ -705,16 +705,26 @@ export interface ApiPagePage extends Struct.CollectionTypeSchema {
     draftAndPublish: true;
   };
   attributes: {
+    content: Schema.Attribute.DynamicZone<
+      [
+        'blocks.markdown',
+        'blocks.menu',
+        'blocks.accordion',
+        'blocks.popup',
+        'blocks.standout',
+        'blocks.quote-block',
+        'blocks.partner-carousel',
+        'blocks.interactive-tool',
+      ]
+    >;
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
-    layout: Schema.Attribute.DynamicZone<[]>;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<'oneToMany', 'api::page.page'> &
       Schema.Attribute.Private;
-    metaTitle: Schema.Attribute.Component<'shared.seo-metadata', false>;
     publishedAt: Schema.Attribute.DateTime;
-    slug: Schema.Attribute.String;
+    slug: Schema.Attribute.UID<'title'> & Schema.Attribute.Required;
     title: Schema.Attribute.String;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &

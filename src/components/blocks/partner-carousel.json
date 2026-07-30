@@ -1,27 +1,29 @@
 {
   "collectionName": "components_blocks_partner_carousels",
   "info": {
-    "displayName": "partner_carousel"
+    "displayName": "Partner Carousel",
+    "icon": "landscape"
   },
-  "options": {},
   "attributes": {
     "name": {
       "type": "string"
     },
-    "partners": {
-      "type": "component",
-      "component": "component.partner-item",
-      "repeatable": true
-    },
     "controls": {
-      "type": "boolean"
+      "type": "boolean",
+      "default": false
     },
     "indicators": {
-      "type": "boolean"
+      "type": "boolean",
+      "default": true
     },
     "autostart": {
-      "type": "boolean"
+      "type": "boolean",
+      "default": true
+    },
+    "partners": {
+      "type": "component",
+      "repeatable": true,
+      "component": "components.partner-item"
     }
-  },
-  "config": {}
+  }
 }

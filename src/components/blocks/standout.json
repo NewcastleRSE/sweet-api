@@ -1,21 +1,15 @@
 {
   "collectionName": "components_blocks_standouts",
   "info": {
-    "displayName": "standout"
+    "displayName": "Standout",
+    "icon": "information"
   },
-  "options": {},
   "attributes": {
     "class": {
-      "type": "enumeration",
-      "enum": [
-        "so-important",
-        "so-alert",
-        "so-info"
-      ]
+      "type": "string"
     },
     "text": {
       "type": "text"
     }
-  },
-  "config": {}
+  }
 }

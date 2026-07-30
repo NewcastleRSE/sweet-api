@@ -1,20 +1,14 @@
 {
   "collectionName": "components_blocks_accordions",
   "info": {
-    "displayName": "accordion"
+    "displayName": "Accordion",
+    "icon": "list"
   },
-  "options": {},
   "attributes": {
-    "item": {
-      "type": "component",
-      "component": "component.items",
-      "repeatable": true
-    },
     "items": {
       "type": "component",
-      "component": "component.accordion-item",
-      "repeatable": true
+      "repeatable": true,
+      "component": "components.accordion-item"
     }
-  },
-  "config": {}
+  }
 }

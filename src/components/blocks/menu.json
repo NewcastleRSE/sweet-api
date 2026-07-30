@@ -1,23 +1,17 @@
 {
   "collectionName": "components_blocks_menus",
   "info": {
-    "displayName": "menu"
+    "displayName": "Menu",
+    "icon": "apps"
   },
-  "options": {},
   "attributes": {
     "menu_type": {
-      "type": "enumeration",
-      "enum": [
-        "standard",
-        "homepage-menu",
-        "described-menu"
-      ]
+      "type": "string"
     },
     "items": {
       "type": "component",
-      "component": "component.menu-item",
-      "repeatable": true
+      "repeatable": true,
+      "component": "components.menu-item"
     }
-  },
-  "config": {}
+  }
 }

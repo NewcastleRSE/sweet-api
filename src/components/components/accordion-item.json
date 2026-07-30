@@ -16,7 +16,7 @@
     },
     "quotes": {
       "type": "component",
-      "component": "component.quotes",
+      "component": "components.quote",
       "repeatable": true
     }
   },

@@ -1,15 +1,14 @@
 {
   "collectionName": "components_blocks_quote_blocks",
   "info": {
-    "displayName": "quote_block"
+    "displayName": "Quote Block",
+    "icon": "quote"
   },
-  "options": {},
   "attributes": {
     "quote_details": {
       "type": "component",
-      "component": "component.quotes",
-      "repeatable": false
+      "repeatable": false,
+      "component": "components.quote"
     }
-  },
-  "config": {}
+  }
 }

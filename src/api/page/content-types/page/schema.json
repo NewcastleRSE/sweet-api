@@ -15,16 +15,22 @@
       "type": "string"
     },
     "slug": {
-      "type": "string"
+      "type": "uid",
+      "targetField": "title",
+      "required": true
     },
-    "metaTitle": {
-      "type": "component",
-      "component": "shared.seo-metadata",
-      "repeatable": false
-    },
-    "layout": {
+    "content": {
       "type": "dynamiczone",
-      "components": []
+      "components": [
+        "blocks.markdown",
+        "blocks.menu",
+        "blocks.accordion",
+        "blocks.popup",
+        "blocks.standout",
+        "blocks.quote-block",
+        "blocks.partner-carousel",
+        "blocks.interactive-tool"
+      ]
     }
   }
 }

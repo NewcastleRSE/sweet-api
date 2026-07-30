@@ -1,9 +1,9 @@
 {
-  "collectionName": "components_component_quotes",
+  "collectionName": "components_components_quotes",
   "info": {
-    "displayName": "quote"
+    "displayName": "Quote",
+    "icon": "quote"
   },
-  "options": {},
   "attributes": {
     "text": {
       "type": "text"
@@ -11,6 +11,5 @@
     "citation": {
       "type": "string"
     }
-  },
-  "config": {}
+  }
 }
