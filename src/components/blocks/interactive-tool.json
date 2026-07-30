@@ -1,0 +1,25 @@
+{
+  "collectionName": "components_blocks_interactive_tools",
+  "info": {
+    "displayName": "interactive_tool"
+  },
+  "options": {},
+  "attributes": {
+    "tool_type": {
+      "type": "enumeration",
+      "enum": [
+        "diary-calendar",
+        "diarygraph",
+        "goalsetter",
+        "goalchecker",
+        "reminders",
+        "my-plans",
+        "user-details-page"
+      ]
+    },
+    "config": {
+      "type": "json"
+    }
+  },
+  "config": {}
+}

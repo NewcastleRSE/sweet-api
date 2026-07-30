@@ -694,6 +694,34 @@ export interface ApiNoteNote extends Struct.CollectionTypeSchema {
   };
 }
 
+export interface ApiPagePage extends Struct.CollectionTypeSchema {
+  collectionName: 'pages';
+  info: {
+    displayName: 'page';
+    pluralName: 'pages';
+    singularName: 'page';
+  };
+  options: {
+    draftAndPublish: true;
+  };
+  attributes: {
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    layout: Schema.Attribute.DynamicZone<[]>;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<'oneToMany', 'api::page.page'> &
+      Schema.Attribute.Private;
+    metaTitle: Schema.Attribute.Component<'shared.seo-metadata', false>;
+    publishedAt: Schema.Attribute.DateTime;
+    slug: Schema.Attribute.String;
+    title: Schema.Attribute.String;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+  };
+}
+
 export interface ApiPlanPlan extends Struct.CollectionTypeSchema {
   collectionName: 'plans';
   info: {
@@ -760,6 +788,39 @@ export interface ApiProfilerProfiler extends Struct.CollectionTypeSchema {
       Schema.Attribute.Private;
     user: Schema.Attribute.Relation<
       'manyToOne',
+      'plugin::users-permissions.user'
+    >;
+  };
+}
+
+export interface ApiRegistrationCodeRegistrationCode
+  extends Struct.CollectionTypeSchema {
+  collectionName: 'registration_codes';
+  info: {
+    displayName: 'registration_code';
+    pluralName: 'registration-codes';
+    singularName: 'registration-code';
+  };
+  options: {
+    draftAndPublish: true;
+  };
+  attributes: {
+    code: Schema.Attribute.String;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::registration-code.registration-code'
+    > &
+      Schema.Attribute.Private;
+    publishedAt: Schema.Attribute.DateTime;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    user: Schema.Attribute.Relation<
+      'oneToOne',
       'plugin::users-permissions.user'
     >;
   };
@@ -1415,8 +1476,10 @@ declare module '@strapi/strapi' {
       'api::goal.goal': ApiGoalGoal;
       'api::meta.meta': ApiMetaMeta;
       'api::note.note': ApiNoteNote;
+      'api::page.page': ApiPagePage;
       'api::plan.plan': ApiPlanPlan;
       'api::profiler.profiler': ApiProfilerProfiler;
+      'api::registration-code.registration-code': ApiRegistrationCodeRegistrationCode;
       'api::reminder.reminder': ApiReminderReminder;
       'api::side-effect.side-effect': ApiSideEffectSideEffect;
       'api::thought.thought': ApiThoughtThought;

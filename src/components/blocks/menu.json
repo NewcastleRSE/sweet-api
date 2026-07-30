@@ -1,0 +1,23 @@
+{
+  "collectionName": "components_blocks_menus",
+  "info": {
+    "displayName": "menu"
+  },
+  "options": {},
+  "attributes": {
+    "menu_type": {
+      "type": "enumeration",
+      "enum": [
+        "standard",
+        "homepage-menu",
+        "described-menu"
+      ]
+    },
+    "items": {
+      "type": "component",
+      "component": "component.menu-item",
+      "repeatable": true
+    }
+  },
+  "config": {}
+}

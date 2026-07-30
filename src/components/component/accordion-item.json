@@ -1,0 +1,24 @@
+{
+  "collectionName": "components_component_accordion_items",
+  "info": {
+    "displayName": "accordion-item"
+  },
+  "options": {},
+  "attributes": {
+    "header": {
+      "type": "string"
+    },
+    "icon": {
+      "type": "string"
+    },
+    "body": {
+      "type": "richtext"
+    },
+    "quotes": {
+      "type": "component",
+      "component": "component.quotes",
+      "repeatable": true
+    }
+  },
+  "config": {}
+}

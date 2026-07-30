@@ -1,0 +1,15 @@
+{
+  "collectionName": "components_blocks_quote_blocks",
+  "info": {
+    "displayName": "quote_block"
+  },
+  "options": {},
+  "attributes": {
+    "quote_details": {
+      "type": "component",
+      "component": "component.quotes",
+      "repeatable": false
+    }
+  },
+  "config": {}
+}

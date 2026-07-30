@@ -1,0 +1,33 @@
+{
+  "collectionName": "components_blocks_popups",
+  "info": {
+    "displayName": "popup"
+  },
+  "options": {},
+  "attributes": {
+    "name_key": {
+      "type": "string"
+    },
+    "title": {
+      "type": "string"
+    },
+    "size": {
+      "type": "enumeration",
+      "enum": [
+        "sm",
+        "md",
+        "lg",
+        "xl"
+      ]
+    },
+    "body": {
+      "type": "richtext"
+    },
+    "quotes": {
+      "type": "component",
+      "component": "component.quotes",
+      "repeatable": true
+    }
+  },
+  "config": {}
+}

@@ -1,0 +1,21 @@
+{
+  "collectionName": "components_blocks_standouts",
+  "info": {
+    "displayName": "standout"
+  },
+  "options": {},
+  "attributes": {
+    "class": {
+      "type": "enumeration",
+      "enum": [
+        "so-important",
+        "so-alert",
+        "so-info"
+      ]
+    },
+    "text": {
+      "type": "text"
+    }
+  },
+  "config": {}
+}

@@ -1,0 +1,23 @@
+{
+  "kind": "collectionType",
+  "collectionName": "registration_codes",
+  "info": {
+    "singularName": "registration-code",
+    "pluralName": "registration-codes",
+    "displayName": "registration_code"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "code": {
+      "type": "string"
+    },
+    "user": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "plugin::users-permissions.user"
+    }
+  }
+}
