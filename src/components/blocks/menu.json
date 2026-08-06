@@ -10,8 +10,8 @@
     },
     "items": {
       "type": "component",
-      "repeatable": true,
-      "component": "components.menu-item"
+      "component": "components.menu-item",
+      "repeatable": true
     }
   }
 }

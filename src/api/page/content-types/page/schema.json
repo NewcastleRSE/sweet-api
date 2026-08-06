@@ -15,9 +15,9 @@
       "type": "string"
     },
     "slug": {
-      "type": "uid",
-      "targetField": "title",
-      "required": true
+      "type": "string",
+      "required": true,
+      "unique": false
     },
     "content": {
       "type": "dynamiczone",
@@ -31,6 +31,18 @@
         "blocks.partner-carousel",
         "blocks.interactive-tool"
       ]
+    },
+    "children": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::page.page",
+      "mappedBy": "parent"
+    },
+    "parent": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::page.page",
+      "inversedBy": "children"
     }
   }
 }

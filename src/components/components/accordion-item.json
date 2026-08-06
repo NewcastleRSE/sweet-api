@@ -18,6 +18,16 @@
       "type": "component",
       "component": "components.quote",
       "repeatable": true
+    },
+    "media": {
+      "type": "media",
+      "multiple": true,
+      "allowedTypes": [
+        "images",
+        "files",
+        "videos",
+        "audios"
+      ]
     }
   },
   "config": {}

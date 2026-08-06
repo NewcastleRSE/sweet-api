@@ -21,6 +21,9 @@ const deniedExecutableTypes = [
 ];
 
 module.exports = () => ({
+  'deep-populate': {
+    enabled: true,
+  },
   'users-permissions': {
     config: {
       jwtManagement: 'refresh',

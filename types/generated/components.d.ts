@@ -109,6 +109,10 @@ export interface ComponentsAccordionItem extends Struct.ComponentSchema {
     body: Schema.Attribute.RichText;
     header: Schema.Attribute.String;
     icon: Schema.Attribute.String;
+    media: Schema.Attribute.Media<
+      'images' | 'files' | 'videos' | 'audios',
+      true
+    >;
     quotes: Schema.Attribute.Component<'components.quote', true>;
   };
 }
@@ -121,6 +125,7 @@ export interface ComponentsItems extends Struct.ComponentSchema {
   attributes: {
     header: Schema.Attribute.String;
     icon: Schema.Attribute.String;
+    media: Schema.Attribute.Media<'images' | 'files' | 'videos' | 'audios'>;
   };
 }
 
@@ -133,6 +138,7 @@ export interface ComponentsMenuItem extends Struct.ComponentSchema {
     description: Schema.Attribute.Text;
     icon: Schema.Attribute.String;
     link: Schema.Attribute.String;
+    media: Schema.Attribute.Media<'images' | 'files' | 'videos' | 'audios'>;
     title: Schema.Attribute.String;
   };
 }
@@ -158,6 +164,7 @@ export interface ComponentsQuote extends Struct.ComponentSchema {
   };
   attributes: {
     citation: Schema.Attribute.String;
+    media: Schema.Attribute.Media<'images' | 'files' | 'videos' | 'audios'>;
     text: Schema.Attribute.Text;
   };
 }
