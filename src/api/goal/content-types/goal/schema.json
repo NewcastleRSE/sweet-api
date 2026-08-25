@@ -43,6 +43,15 @@
     },
     "goal_status": {
       "type": "string"
+    },
+    "y": {
+      "type": "integer"
+    },
+    "p": {
+      "type": "integer"
+    },
+    "n": {
+      "type": "integer"
     }
   }
 }

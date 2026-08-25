@@ -659,7 +659,9 @@ export interface ApiGoalGoal extends Struct.CollectionTypeSchema {
     localizations: Schema.Attribute.Relation<'oneToMany', 'api::goal.goal'> &
       Schema.Attribute.Private;
     minutes: Schema.Attribute.Integer;
+    n: Schema.Attribute.Integer;
     outcome: Schema.Attribute.String;
+    p: Schema.Attribute.Integer;
     publishedAt: Schema.Attribute.DateTime;
     reviewDate: Schema.Attribute.Date;
     state: Schema.Attribute.String;
@@ -671,6 +673,7 @@ export interface ApiGoalGoal extends Struct.CollectionTypeSchema {
       'manyToOne',
       'plugin::users-permissions.user'
     >;
+    y: Schema.Attribute.Integer;
   };
 }
 
