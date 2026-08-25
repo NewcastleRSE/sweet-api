@@ -19,6 +19,21 @@
     },
     "twenty_one_day_option": {
       "type": "integer"
+    },
+    "type": {
+      "type": "string"
+    },
+    "subtype": {
+      "type": "string"
+    },
+    "y": {
+      "type": "integer"
+    },
+    "p": {
+      "type": "integer"
+    },
+    "n": {
+      "type": "integer"
     }
   }
 }

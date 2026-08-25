@@ -1,0 +1,28 @@
+{
+  "collectionName": "components_components_form_items",
+  "info": {
+    "displayName": "form-item"
+  },
+  "options": {},
+  "attributes": {
+    "label": {
+      "type": "string"
+    },
+    "name": {
+      "type": "string"
+    },
+    "type": {
+      "type": "enumeration",
+      "enum": [
+        "text",
+        "email",
+        "password",
+        "number",
+        "textarea",
+        "select",
+        "checkbox"
+      ]
+    }
+  },
+  "config": {}
+}

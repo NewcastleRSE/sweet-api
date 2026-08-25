@@ -34,6 +34,12 @@
     },
     "reminder_type": {
       "type": "string"
+    },
+    "time": {
+      "type": "time"
+    },
+    "to": {
+      "type": "string"
     }
   }
 }

@@ -11,6 +11,18 @@ export interface BlocksAccordion extends Struct.ComponentSchema {
   };
 }
 
+export interface BlocksForm extends Struct.ComponentSchema {
+  collectionName: 'components_blocks_forms';
+  info: {
+    displayName: 'Form';
+  };
+  attributes: {
+    fields: Schema.Attribute.Component<'components.form-item', true>;
+    submit_text: Schema.Attribute.String;
+    success_text: Schema.Attribute.String;
+  };
+}
+
 export interface BlocksInteractiveTool extends Struct.ComponentSchema {
   collectionName: 'components_blocks_interactive_tools';
   info: {
@@ -107,6 +119,7 @@ export interface ComponentsAccordionItem extends Struct.ComponentSchema {
   };
   attributes: {
     body: Schema.Attribute.RichText;
+    form: Schema.Attribute.Component<'components.form-item', true>;
     header: Schema.Attribute.String;
     icon: Schema.Attribute.String;
     media: Schema.Attribute.Media<
@@ -114,6 +127,20 @@ export interface ComponentsAccordionItem extends Struct.ComponentSchema {
       true
     >;
     quotes: Schema.Attribute.Component<'components.quote', true>;
+  };
+}
+
+export interface ComponentsFormItem extends Struct.ComponentSchema {
+  collectionName: 'components_components_form_items';
+  info: {
+    displayName: 'form-item';
+  };
+  attributes: {
+    label: Schema.Attribute.String;
+    name: Schema.Attribute.String;
+    type: Schema.Attribute.Enumeration<
+      ['text', 'email', 'password', 'number', 'textarea', 'select', 'checkbox']
+    >;
   };
 }
 
@@ -173,6 +200,7 @@ declare module '@strapi/strapi' {
   export namespace Public {
     export interface ComponentSchemas {
       'blocks.accordion': BlocksAccordion;
+      'blocks.form': BlocksForm;
       'blocks.interactive-tool': BlocksInteractiveTool;
       'blocks.markdown': BlocksMarkdown;
       'blocks.menu': BlocksMenu;
@@ -181,6 +209,7 @@ declare module '@strapi/strapi' {
       'blocks.quote-block': BlocksQuoteBlock;
       'blocks.standout': BlocksStandout;
       'components.accordion-item': ComponentsAccordionItem;
+      'components.form-item': ComponentsFormItem;
       'components.items': ComponentsItems;
       'components.menu-item': ComponentsMenuItem;
       'components.partner-item': ComponentsPartnerItem;

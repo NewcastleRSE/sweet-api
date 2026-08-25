@@ -28,6 +28,11 @@
         "videos",
         "audios"
       ]
+    },
+    "form": {
+      "type": "component",
+      "component": "components.form-item",
+      "repeatable": true
     }
   },
   "config": {}

@@ -1,0 +1,21 @@
+{
+  "collectionName": "components_blocks_forms",
+  "info": {
+    "displayName": "Form"
+  },
+  "options": {},
+  "attributes": {
+    "fields": {
+      "type": "component",
+      "component": "components.form-item",
+      "repeatable": true
+    },
+    "submit_text": {
+      "type": "string"
+    },
+    "success_text": {
+      "type": "string"
+    }
+  },
+  "config": {}
+}

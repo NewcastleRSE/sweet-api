@@ -443,17 +443,18 @@ export interface AdminUser extends Struct.CollectionTypeSchema {
   };
 }
 
-export interface ApiAdheranceAdherance extends Struct.CollectionTypeSchema {
-  collectionName: 'adherances';
+export interface ApiAdherenceAdherence extends Struct.CollectionTypeSchema {
+  collectionName: 'adherences';
   info: {
-    displayName: 'adherance';
-    pluralName: 'adherances';
-    singularName: 'adherance';
+    displayName: 'adherence';
+    pluralName: 'adherences';
+    singularName: 'adherence';
   };
   options: {
     draftAndPublish: true;
   };
   attributes: {
+    adherence: Schema.Attribute.Boolean;
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
@@ -461,7 +462,7 @@ export interface ApiAdheranceAdherance extends Struct.CollectionTypeSchema {
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<
       'oneToMany',
-      'api::adherance.adherance'
+      'api::adherence.adherence'
     > &
       Schema.Attribute.Private;
     publishedAt: Schema.Attribute.DateTime;
@@ -472,6 +473,39 @@ export interface ApiAdheranceAdherance extends Struct.CollectionTypeSchema {
       'manyToOne',
       'plugin::users-permissions.user'
     >;
+  };
+}
+
+export interface ApiConcernSpecificConcernSpecific
+  extends Struct.CollectionTypeSchema {
+  collectionName: 'concern_specifics';
+  info: {
+    displayName: 'concernSpecific';
+    pluralName: 'concern-specifics';
+    singularName: 'concern-specific';
+  };
+  options: {
+    draftAndPublish: true;
+  };
+  attributes: {
+    concern: Schema.Attribute.String;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::concern-specific.concern-specific'
+    > &
+      Schema.Attribute.Private;
+    profilers: Schema.Attribute.Relation<
+      'manyToMany',
+      'api::profiler.profiler'
+    >;
+    publishedAt: Schema.Attribute.DateTime;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
   };
 }
 
@@ -489,7 +523,7 @@ export interface ApiContactContact extends Struct.CollectionTypeSchema {
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
-    email: Schema.Attribute.Email;
+    email: Schema.Attribute.String;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<
       'oneToMany',
@@ -563,6 +597,10 @@ export interface ApiDrugDrug extends Struct.CollectionTypeSchema {
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
+    user: Schema.Attribute.Relation<
+      'manyToOne',
+      'plugin::users-permissions.user'
+    >;
   };
 }
 
@@ -615,6 +653,7 @@ export interface ApiGoalGoal extends Struct.CollectionTypeSchema {
       Schema.Attribute.Private;
     days: Schema.Attribute.Integer;
     detail: Schema.Attribute.Text;
+    goal_status: Schema.Attribute.String;
     goaltype: Schema.Attribute.String;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<'oneToMany', 'api::goal.goal'> &
@@ -628,7 +667,7 @@ export interface ApiGoalGoal extends Struct.CollectionTypeSchema {
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
-    users_permissions_user: Schema.Attribute.Relation<
+    user: Schema.Attribute.Relation<
       'manyToOne',
       'plugin::users-permissions.user'
     >;
@@ -652,8 +691,12 @@ export interface ApiMetaMeta extends Struct.CollectionTypeSchema {
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<'oneToMany', 'api::meta.meta'> &
       Schema.Attribute.Private;
+    n: Schema.Attribute.Integer;
+    p: Schema.Attribute.Integer;
     publishedAt: Schema.Attribute.DateTime;
+    subtype: Schema.Attribute.String;
     twenty_one_day_option: Schema.Attribute.Integer;
+    type: Schema.Attribute.String;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
@@ -661,6 +704,7 @@ export interface ApiMetaMeta extends Struct.CollectionTypeSchema {
       'manyToOne',
       'plugin::users-permissions.user'
     >;
+    y: Schema.Attribute.Integer;
   };
 }
 
@@ -716,6 +760,7 @@ export interface ApiPagePage extends Struct.CollectionTypeSchema {
         'blocks.quote-block',
         'blocks.partner-carousel',
         'blocks.interactive-tool',
+        'blocks.form',
       ]
     >;
     createdAt: Schema.Attribute.DateTime;
@@ -779,7 +824,6 @@ export interface ApiProfilerProfiler extends Struct.CollectionTypeSchema {
   };
   attributes: {
     concernAreas: Schema.Attribute.String;
-    concernSpecifics: Schema.Attribute.String;
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
@@ -795,6 +839,10 @@ export interface ApiProfilerProfiler extends Struct.CollectionTypeSchema {
     reason: Schema.Attribute.String;
     reminderDate: Schema.Attribute.Date;
     result: Schema.Attribute.String;
+    specifics: Schema.Attribute.Relation<
+      'manyToMany',
+      'api::concern-specific.concern-specific'
+    >;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
@@ -864,6 +912,8 @@ export interface ApiReminderReminder extends Struct.CollectionTypeSchema {
     publishedAt: Schema.Attribute.DateTime;
     reminder_type: Schema.Attribute.String;
     start: Schema.Attribute.Date;
+    time: Schema.Attribute.Time;
+    to: Schema.Attribute.String;
     type: Schema.Attribute.String;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
@@ -942,6 +992,38 @@ export interface ApiThoughtThought extends Struct.CollectionTypeSchema {
       Schema.Attribute.Private;
     user: Schema.Attribute.Relation<
       'manyToOne',
+      'plugin::users-permissions.user'
+    >;
+  };
+}
+
+export interface ApiTunnelTunnel extends Struct.CollectionTypeSchema {
+  collectionName: 'tunnels';
+  info: {
+    displayName: 'tunnel';
+    pluralName: 'tunnels';
+    singularName: 'tunnel';
+  };
+  options: {
+    draftAndPublish: true;
+  };
+  attributes: {
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::tunnel.tunnel'
+    > &
+      Schema.Attribute.Private;
+    publishedAt: Schema.Attribute.DateTime;
+    slug: Schema.Attribute.String;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    users: Schema.Attribute.Relation<
+      'manyToMany',
       'plugin::users-permissions.user'
     >;
   };
@@ -1445,9 +1527,9 @@ export interface PluginUsersPermissionsUser
     draftAndPublish: false;
   };
   attributes: {
-    adherances: Schema.Attribute.Relation<
+    adherences: Schema.Attribute.Relation<
       'oneToMany',
-      'api::adherance.adherance'
+      'api::adherence.adherence'
     >;
     blocked: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<false>;
     confirmationToken: Schema.Attribute.String & Schema.Attribute.Private;
@@ -1456,7 +1538,9 @@ export interface PluginUsersPermissionsUser
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
+    deactivated: Schema.Attribute.Boolean;
     diaries: Schema.Attribute.Relation<'oneToMany', 'api::diary.diary'>;
+    drugs: Schema.Attribute.Relation<'oneToMany', 'api::drug.drug'>;
     email: Schema.Attribute.Email &
       Schema.Attribute.Required &
       Schema.Attribute.SetMinMaxLength<{
@@ -1466,8 +1550,10 @@ export interface PluginUsersPermissionsUser
       'oneToMany',
       'api::favourite.favourite'
     >;
+    firstName: Schema.Attribute.String;
     goals: Schema.Attribute.Relation<'oneToMany', 'api::goal.goal'>;
     init: Schema.Attribute.Date;
+    lastName: Schema.Attribute.String;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<
       'oneToMany',
@@ -1497,6 +1583,7 @@ export interface PluginUsersPermissionsUser
     >;
     SweetID: Schema.Attribute.UID;
     thoughts: Schema.Attribute.Relation<'oneToMany', 'api::thought.thought'>;
+    tunnels: Schema.Attribute.Relation<'manyToMany', 'api::tunnel.tunnel'>;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
@@ -1520,7 +1607,8 @@ declare module '@strapi/strapi' {
       'admin::transfer-token': AdminTransferToken;
       'admin::transfer-token-permission': AdminTransferTokenPermission;
       'admin::user': AdminUser;
-      'api::adherance.adherance': ApiAdheranceAdherance;
+      'api::adherence.adherence': ApiAdherenceAdherence;
+      'api::concern-specific.concern-specific': ApiConcernSpecificConcernSpecific;
       'api::contact.contact': ApiContactContact;
       'api::diary.diary': ApiDiaryDiary;
       'api::drug.drug': ApiDrugDrug;
@@ -1535,6 +1623,7 @@ declare module '@strapi/strapi' {
       'api::reminder.reminder': ApiReminderReminder;
       'api::side-effect.side-effect': ApiSideEffectSideEffect;
       'api::thought.thought': ApiThoughtThought;
+      'api::tunnel.tunnel': ApiTunnelTunnel;
       'plugin::content-releases.release': PluginContentReleasesRelease;
       'plugin::content-releases.release-action': PluginContentReleasesReleaseAction;
       'plugin::deep-populate.cache': PluginDeepPopulateCache;

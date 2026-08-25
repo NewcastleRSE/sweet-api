@@ -1,9 +1,9 @@
 'use strict';
 
 /**
- * adherance controller
+ * tunnel controller
  */
 
 const { createCoreController } = require('@strapi/strapi').factories;
 
-module.exports = createCoreController('api::adherance.adherance');
+module.exports = createCoreController('api::tunnel.tunnel');

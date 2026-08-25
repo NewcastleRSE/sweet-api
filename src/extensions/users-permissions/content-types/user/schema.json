@@ -88,7 +88,7 @@
       "type": "relation",
       "relation": "oneToMany",
       "target": "api::goal.goal",
-      "mappedBy": "users_permissions_user"
+      "mappedBy": "user"
     },
     "metas": {
       "type": "relation",
@@ -120,12 +120,6 @@
       "target": "api::note.note",
       "mappedBy": "user"
     },
-    "adherances": {
-      "type": "relation",
-      "relation": "oneToMany",
-      "target": "api::adherance.adherance",
-      "mappedBy": "user"
-    },
     "side_effects": {
       "type": "relation",
       "relation": "oneToMany",
@@ -142,6 +136,33 @@
       "type": "relation",
       "relation": "oneToMany",
       "target": "api::thought.thought",
+      "mappedBy": "user"
+    },
+    "tunnels": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::tunnel.tunnel",
+      "mappedBy": "users"
+    },
+    "firstName": {
+      "type": "string"
+    },
+    "lastName": {
+      "type": "string"
+    },
+    "deactivated": {
+      "type": "boolean"
+    },
+    "adherences": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::adherence.adherence",
+      "mappedBy": "user"
+    },
+    "drugs": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::drug.drug",
       "mappedBy": "user"
     }
   }

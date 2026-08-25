@@ -29,7 +29,8 @@
         "blocks.standout",
         "blocks.quote-block",
         "blocks.partner-carousel",
-        "blocks.interactive-tool"
+        "blocks.interactive-tool",
+        "blocks.form"
       ]
     },
     "children": {

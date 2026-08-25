@@ -40,4 +40,10 @@ module.exports = () => ({
       },
     },
   },
+  'strapi-v5-plugin-populate-deep': {
+    enabled: true,
+    config: {
+      defaultDepth: 5, // Sets how many levels deep it will automatically look (default is 5)
+    },
+  },
 });

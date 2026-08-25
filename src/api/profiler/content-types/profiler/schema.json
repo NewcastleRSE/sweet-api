@@ -29,14 +29,17 @@
     "concernAreas": {
       "type": "string"
     },
-    "concernSpecifics": {
-      "type": "string"
-    },
     "reminderDate": {
       "type": "date"
     },
     "reason": {
       "type": "string"
+    },
+    "specifics": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::concern-specific.concern-specific",
+      "mappedBy": "profilers"
     }
   }
 }

@@ -11,7 +11,7 @@
   },
   "pluginOptions": {},
   "attributes": {
-    "users_permissions_user": {
+    "user": {
       "type": "relation",
       "relation": "manyToOne",
       "target": "plugin::users-permissions.user",
@@ -40,6 +40,9 @@
     },
     "twenty_one_day_option": {
       "type": "integer"
+    },
+    "goal_status": {
+      "type": "string"
     }
   }
 }

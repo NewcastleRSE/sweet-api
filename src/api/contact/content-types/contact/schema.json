@@ -20,14 +20,14 @@
     "phone": {
       "type": "string"
     },
-    "email": {
-      "type": "email"
-    },
     "user": {
       "type": "relation",
       "relation": "manyToOne",
       "target": "plugin::users-permissions.user",
       "inversedBy": "contacts"
+    },
+    "email": {
+      "type": "string"
     }
   }
 }

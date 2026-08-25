@@ -1,9 +1,9 @@
 'use strict';
 
 /**
- * adherance service
+ * tunnel service
  */
 
 const { createCoreService } = require('@strapi/strapi').factories;
 
-module.exports = createCoreService('api::adherance.adherance');
+module.exports = createCoreService('api::tunnel.tunnel');
