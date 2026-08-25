@@ -15,10 +15,10 @@
       "type": "string"
     },
     "negative": {
-      "type": "string"
+      "type": "text"
     },
     "positive": {
-      "type": "string"
+      "type": "text"
     },
     "user": {
       "type": "relation",

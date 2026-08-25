@@ -983,9 +983,9 @@ export interface ApiThoughtThought extends Struct.CollectionTypeSchema {
       'api::thought.thought'
     > &
       Schema.Attribute.Private;
-    negative: Schema.Attribute.String;
+    negative: Schema.Attribute.Text;
     path: Schema.Attribute.String;
-    positive: Schema.Attribute.String;
+    positive: Schema.Attribute.Text;
     publishedAt: Schema.Attribute.DateTime;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
