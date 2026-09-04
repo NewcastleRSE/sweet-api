@@ -20,6 +20,18 @@ export interface BlocksForm extends Struct.ComponentSchema {
     fields: Schema.Attribute.Component<'components.form-item', true>;
     submit_text: Schema.Attribute.String;
     success_text: Schema.Attribute.String;
+    table: Schema.Attribute.String;
+    type: Schema.Attribute.String;
+  };
+}
+
+export interface BlocksHero extends Struct.ComponentSchema {
+  collectionName: 'components_blocks_heroes';
+  info: {
+    displayName: 'Hero';
+  };
+  attributes: {
+    image: Schema.Attribute.Media<'images' | 'files' | 'videos' | 'audios'>;
   };
 }
 
@@ -83,6 +95,7 @@ export interface BlocksPopup extends Struct.ComponentSchema {
   attributes: {
     body: Schema.Attribute.RichText;
     name_key: Schema.Attribute.String;
+    pages: Schema.Attribute.Component<'components.popup-page', true>;
     quotes: Schema.Attribute.Component<'components.quote', true>;
     size: Schema.Attribute.String;
     title: Schema.Attribute.String;
@@ -112,6 +125,17 @@ export interface BlocksStandout extends Struct.ComponentSchema {
   };
 }
 
+export interface BlocksThoughts extends Struct.ComponentSchema {
+  collectionName: 'components_blocks_thoughts';
+  info: {
+    displayName: 'Thoughts';
+  };
+  attributes: {
+    items: Schema.Attribute.Component<'components.thoughts-item', true>;
+    success_message: Schema.Attribute.Text;
+  };
+}
+
 export interface ComponentsAccordionItem extends Struct.ComponentSchema {
   collectionName: 'components_component_accordion_items';
   info: {
@@ -119,7 +143,7 @@ export interface ComponentsAccordionItem extends Struct.ComponentSchema {
   };
   attributes: {
     body: Schema.Attribute.RichText;
-    form: Schema.Attribute.Component<'components.form-item', true>;
+    form: Schema.Attribute.Component<'blocks.form', false>;
     header: Schema.Attribute.String;
     icon: Schema.Attribute.String;
     media: Schema.Attribute.Media<
@@ -166,6 +190,8 @@ export interface ComponentsMenuItem extends Struct.ComponentSchema {
     icon: Schema.Attribute.String;
     link: Schema.Attribute.String;
     media: Schema.Attribute.Media<'images' | 'files' | 'videos' | 'audios'>;
+    popup: Schema.Attribute.Component<'blocks.popup', false>;
+    popup_link: Schema.Attribute.String;
     title: Schema.Attribute.String;
   };
 }
@@ -183,6 +209,18 @@ export interface ComponentsPartnerItem extends Struct.ComponentSchema {
   };
 }
 
+export interface ComponentsPopupPage extends Struct.ComponentSchema {
+  collectionName: 'components_components_popup_pages';
+  info: {
+    displayName: 'popup-page';
+  };
+  attributes: {
+    accordion: Schema.Attribute.Component<'blocks.accordion', false>;
+    body: Schema.Attribute.RichText;
+    title: Schema.Attribute.String;
+  };
+}
+
 export interface ComponentsQuote extends Struct.ComponentSchema {
   collectionName: 'components_components_quotes';
   info: {
@@ -196,11 +234,25 @@ export interface ComponentsQuote extends Struct.ComponentSchema {
   };
 }
 
+export interface ComponentsThoughtsItem extends Struct.ComponentSchema {
+  collectionName: 'components_components_thoughts_items';
+  info: {
+    displayName: 'thoughts-item';
+  };
+  attributes: {
+    greater_label: Schema.Attribute.String;
+    lesser_label: Schema.Attribute.String;
+    path: Schema.Attribute.String;
+    title: Schema.Attribute.String;
+  };
+}
+
 declare module '@strapi/strapi' {
   export namespace Public {
     export interface ComponentSchemas {
       'blocks.accordion': BlocksAccordion;
       'blocks.form': BlocksForm;
+      'blocks.hero': BlocksHero;
       'blocks.interactive-tool': BlocksInteractiveTool;
       'blocks.markdown': BlocksMarkdown;
       'blocks.menu': BlocksMenu;
@@ -208,12 +260,15 @@ declare module '@strapi/strapi' {
       'blocks.popup': BlocksPopup;
       'blocks.quote-block': BlocksQuoteBlock;
       'blocks.standout': BlocksStandout;
+      'blocks.thoughts': BlocksThoughts;
       'components.accordion-item': ComponentsAccordionItem;
       'components.form-item': ComponentsFormItem;
       'components.items': ComponentsItems;
       'components.menu-item': ComponentsMenuItem;
       'components.partner-item': ComponentsPartnerItem;
+      'components.popup-page': ComponentsPopupPage;
       'components.quote': ComponentsQuote;
+      'components.thoughts-item': ComponentsThoughtsItem;
     }
   }
 }

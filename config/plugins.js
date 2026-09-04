@@ -20,7 +20,10 @@ const deniedExecutableTypes = [
   'application/x-mach-binary',
 ];
 
-module.exports = () => ({
+/**
+ * @param {{ env: (key: string, defaultValue?: any) => any }} props
+ */
+module.exports = ({ env }) => ({
   'deep-populate': {
     enabled: true,
   },
@@ -35,6 +38,12 @@ module.exports = () => ({
       },
     },
   },
+  'refresh-token': {
+    config: {
+      refreshTokenExpiresIn: '30d', 
+      refreshTokenSecret: env('REFRESH_JWT_SECRET'),
+    },
+  },
   upload: {
     config: {
       security: {
@@ -46,7 +55,7 @@ module.exports = () => ({
   'strapi-v5-plugin-populate-deep': {
     enabled: true,
     config: {
-      defaultDepth: 5, // Sets how many levels deep it will automatically look (default is 5)
+      defaultDepth: 15, // Sets how many levels deep it will automatically look (default is 5)
     },
   },
 });

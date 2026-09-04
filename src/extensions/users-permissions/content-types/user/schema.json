@@ -59,6 +59,14 @@
       "default": false,
       "configurable": false
     },
+    "refresh_tokens": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "plugin::refresh-token.token",
+      "mappedBy": "user",
+      "private": true,
+      "configurable": false
+    },
     "role": {
       "type": "relation",
       "relation": "manyToOne",
@@ -164,6 +172,16 @@
       "relation": "oneToMany",
       "target": "api::drug.drug",
       "mappedBy": "user"
+    },
+    "mobile": {
+      "type": "string"
+    },
+    "contact_preference": {
+      "type": "enumeration",
+      "enum": [
+        "sms",
+        "email"
+      ]
     }
   }
 }

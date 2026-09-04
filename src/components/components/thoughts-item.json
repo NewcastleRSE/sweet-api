@@ -1,0 +1,22 @@
+{
+  "collectionName": "components_components_thoughts_items",
+  "info": {
+    "displayName": "thoughts-item"
+  },
+  "options": {},
+  "attributes": {
+    "title": {
+      "type": "string"
+    },
+    "greater_label": {
+      "type": "string"
+    },
+    "lesser_label": {
+      "type": "string"
+    },
+    "path": {
+      "type": "string"
+    }
+  },
+  "config": {}
+}

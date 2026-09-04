@@ -7,8 +7,8 @@
   "attributes": {
     "items": {
       "type": "component",
-      "repeatable": true,
-      "component": "components.accordion-item"
+      "component": "components.accordion-item",
+      "repeatable": true
     }
   }
 }

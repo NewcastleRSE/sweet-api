@@ -1,0 +1,18 @@
+{
+  "collectionName": "components_blocks_thoughts",
+  "info": {
+    "displayName": "Thoughts"
+  },
+  "options": {},
+  "attributes": {
+    "items": {
+      "type": "component",
+      "component": "components.thoughts-item",
+      "repeatable": true
+    },
+    "success_message": {
+      "type": "text"
+    }
+  },
+  "config": {}
+}

@@ -19,8 +19,13 @@
     },
     "quotes": {
       "type": "component",
-      "repeatable": true,
-      "component": "components.quote"
+      "component": "components.quote",
+      "repeatable": true
+    },
+    "pages": {
+      "type": "component",
+      "component": "components.popup-page",
+      "repeatable": true
     }
   }
 }

@@ -30,7 +30,8 @@
         "blocks.quote-block",
         "blocks.partner-carousel",
         "blocks.interactive-tool",
-        "blocks.form"
+        "blocks.form",
+        "blocks.thoughts"
       ]
     },
     "children": {
@@ -44,6 +45,11 @@
       "relation": "manyToOne",
       "target": "api::page.page",
       "inversedBy": "children"
+    },
+    "Hero": {
+      "type": "component",
+      "component": "blocks.hero",
+      "repeatable": false
     }
   }
 }

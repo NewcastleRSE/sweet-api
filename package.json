@@ -16,6 +16,8 @@
   },
   "dependencies": {
     "@fourlights/strapi-plugin-deep-populate": "^1.16.0",
+    "@redon2inc/strapi-plugin-refresh-token": "^0.1.4",
+    "@sentry/node": "^10.73.0",
     "@strapi/database": "5.51.1",
     "@strapi/plugin-cloud": "5.51.1",
     "@strapi/plugin-users-permissions": "5.51.1",

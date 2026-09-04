@@ -1,0 +1,21 @@
+{
+  "collectionName": "components_components_popup_pages",
+  "info": {
+    "displayName": "popup-page"
+  },
+  "options": {},
+  "attributes": {
+    "title": {
+      "type": "string"
+    },
+    "body": {
+      "type": "richtext"
+    },
+    "accordion": {
+      "type": "component",
+      "component": "blocks.accordion",
+      "repeatable": false
+    }
+  },
+  "config": {}
+}

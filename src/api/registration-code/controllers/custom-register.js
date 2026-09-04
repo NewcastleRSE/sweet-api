@@ -51,6 +51,7 @@ module.exports = {
         confirmed: true,
         blocked: false,
         role: role.id,
+        contact_preference: 'email'
       });
 
       // 4. Link the registration code to the new user using Document Service

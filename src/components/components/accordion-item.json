@@ -31,8 +31,8 @@
     },
     "form": {
       "type": "component",
-      "component": "components.form-item",
-      "repeatable": true
+      "component": "blocks.form",
+      "repeatable": false
     }
   },
   "config": {}

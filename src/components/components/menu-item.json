@@ -26,6 +26,14 @@
         "videos",
         "audios"
       ]
+    },
+    "popup_link": {
+      "type": "string"
+    },
+    "popup": {
+      "type": "component",
+      "component": "blocks.popup",
+      "repeatable": false
     }
   },
   "config": {}
