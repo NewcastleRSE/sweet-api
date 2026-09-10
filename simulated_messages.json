@@ -1,0 +1,12 @@
+[
+  {
+    "timestamp": "2026-09-10T08:14:11.025Z",
+    "type": "take",
+    "channel": "email",
+    "recipient": "kate.court@ncl.ac.uk",
+    "userName": "Kate1 Court",
+    "subject": "A reminder to take your hormone therapy",
+    "content": "<div><p>Hi Kate1 Court,</p><p>Remember your hormone therapy today.</p><p>From <strong>HT &amp; Me</strong></p></div>",
+    "isTestUserAccount": true
+  }
+]

@@ -21,6 +21,7 @@
     "@strapi/database": "5.51.1",
     "@strapi/plugin-cloud": "5.51.1",
     "@strapi/plugin-users-permissions": "5.51.1",
+    "@strapi/provider-email-nodemailer": "^5.53.0",
     "@strapi/strapi": "5.51.1",
     "mysql2": "3.20.0",
     "react": "^18.0.0",

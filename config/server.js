@@ -1,4 +1,6 @@
-module.exports = ({ env }) => ({
+import cronTasks from './cron-tasks.js'
+
+export default ({ env }) => ({
   host: env('HOST', '0.0.0.0'),
   port: env.int('PORT', 1337),
   app: {
@@ -6,5 +8,9 @@ module.exports = ({ env }) => ({
   },
   webhooks: {
     populateRelations: env.bool('WEBHOOKS_POPULATE_RELATIONS', false),
+  },
+  cron: {
+    enabled: env('CRON_ENABLED', true), 
+    tasks: cronTasks,
   },
 });

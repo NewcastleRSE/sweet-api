@@ -58,4 +58,22 @@ module.exports = ({ env }) => ({
       defaultDepth: 15, // Sets how many levels deep it will automatically look (default is 5)
     },
   },
+  email: {
+    config: {
+      provider: '@strapi/provider-email-nodemailer',
+      providerOptions: {
+        host: 'smtp.gmail.com',
+        port: 465,
+        secure: true,
+        auth: {
+          user: env('SMTP_USERNAME'), // Your Gmail address
+          pass: env('SMTP_PASSWORD'), // Your Google App Password (not your normal password)
+        },
+      },
+      settings: {
+        defaultFrom: env('SMTP_USERNAME'),
+        defaultReplyTo: env('SMTP_USERNAME'),
+      },
+    },
+  },
 });
