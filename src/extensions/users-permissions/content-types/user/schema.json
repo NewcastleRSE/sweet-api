@@ -182,6 +182,12 @@
         "sms",
         "email"
       ]
+    },
+    "audit_logs": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::audit-log.audit-log",
+      "mappedBy": "user"
     }
   }
 }

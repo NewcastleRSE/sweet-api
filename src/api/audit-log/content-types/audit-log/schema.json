@@ -1,0 +1,48 @@
+{
+  "kind": "collectionType",
+  "collectionName": "audit_logs",
+  "info": {
+    "singularName": "audit-log",
+    "pluralName": "audit-logs",
+    "displayName": "audit-log"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "user": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "plugin::users-permissions.user",
+      "inversedBy": "audit_logs"
+    },
+    "platform": {
+      "type": "string"
+    },
+    "browser": {
+      "type": "string"
+    },
+    "action": {
+      "type": "string"
+    },
+    "referrer": {
+      "type": "string"
+    },
+    "http_status": {
+      "type": "string"
+    },
+    "oldData": {
+      "type": "json"
+    },
+    "newData": {
+      "type": "json"
+    },
+    "datetime": {
+      "type": "datetime"
+    },
+    "destination": {
+      "type": "string"
+    }
+  }
+}

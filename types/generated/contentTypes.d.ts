@@ -476,6 +476,46 @@ export interface ApiAdherenceAdherence extends Struct.CollectionTypeSchema {
   };
 }
 
+export interface ApiAuditLogAuditLog extends Struct.CollectionTypeSchema {
+  collectionName: 'audit_logs';
+  info: {
+    displayName: 'audit-log';
+    pluralName: 'audit-logs';
+    singularName: 'audit-log';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    action: Schema.Attribute.String;
+    browser: Schema.Attribute.String;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    datetime: Schema.Attribute.DateTime;
+    destination: Schema.Attribute.String;
+    http_status: Schema.Attribute.String;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::audit-log.audit-log'
+    > &
+      Schema.Attribute.Private;
+    newData: Schema.Attribute.JSON;
+    oldData: Schema.Attribute.JSON;
+    platform: Schema.Attribute.String;
+    publishedAt: Schema.Attribute.DateTime;
+    referrer: Schema.Attribute.String;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    user: Schema.Attribute.Relation<
+      'manyToOne',
+      'plugin::users-permissions.user'
+    >;
+  };
+}
+
 export interface ApiConcernSpecificConcernSpecific
   extends Struct.CollectionTypeSchema {
   collectionName: 'concern_specifics';
@@ -1610,6 +1650,10 @@ export interface PluginUsersPermissionsUser
       'oneToMany',
       'api::adherence.adherence'
     >;
+    audit_logs: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::audit-log.audit-log'
+    >;
     blocked: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<false>;
     confirmationToken: Schema.Attribute.String & Schema.Attribute.Private;
     confirmed: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<false>;
@@ -1694,6 +1738,7 @@ declare module '@strapi/strapi' {
       'admin::transfer-token-permission': AdminTransferTokenPermission;
       'admin::user': AdminUser;
       'api::adherence.adherence': ApiAdherenceAdherence;
+      'api::audit-log.audit-log': ApiAuditLogAuditLog;
       'api::concern-specific.concern-specific': ApiConcernSpecificConcernSpecific;
       'api::contact.contact': ApiContactContact;
       'api::diary.diary': ApiDiaryDiary;

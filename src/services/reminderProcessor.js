@@ -94,7 +94,7 @@ async function sendFiretextSms(strapi, { recipient, message, contextMeta }) {
     params.append('apiKey', apiKey)
     params.append('to', cleanRecipient)
     params.append('message', message)
-    params.append('from', 'SweetApp')
+    params.append('from', 'HT&Me')
 
     const response = await fetch('https://www.firetext.co.uk/api/sendsms', {
       method: 'POST',
