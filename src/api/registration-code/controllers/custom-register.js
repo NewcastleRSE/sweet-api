@@ -1,6 +1,35 @@
 
 'use strict';
 
+const { recordOutboundAudit } = require('../../../services/outboundAudit.cjs');
+
+const stripHtml = (value = '') => value.replace(/<[^>]*>?/gm, '');
+const formatMessage = (value = '', user) => value.replace(/{fullname}/g, `${user?.firstName || ''} ${user?.lastName || ''}`.trim());
+
+async function sendRegistrationMessage(strapi, message, recipient, user, action) {
+  const html = formatMessage(message.html || '', user);
+  const subject = formatMessage(message.subject || 'HT&Me notification', user);
+
+  try {
+    await strapi.plugin('email').service('email').send({
+      to: recipient,
+      subject,
+      text: formatMessage(message.plain || stripHtml(html), user),
+      html,
+    });
+    await recordOutboundAudit(strapi, {
+      user,
+      action,
+      channel: 'email',
+      recipient,
+      subject,
+      messageType: message.type,
+    });
+  } catch (error) {
+    strapi.log.error(`[REGISTRATION EMAIL] Failed to send ${message.type} to ${recipient}:`, error);
+  }
+}
+
 module.exports = {
   /**
      * @param {{ request: { body: { registrationCode: any; email: any; password: any; firstName: any; lastName: any; phoneNumber: any; }; }; badRequest: (arg0: string) => any; send: (arg0: { jwt: any; user: any; }) => any; }} ctx
@@ -64,6 +93,21 @@ module.exports = {
 
       // 5. Issue a JWT token for the new user so they are instantly logged in
       const jwt = strapi.plugin('users-permissions').service('jwt').issue({ id: newUser.id });
+
+      const messages = await strapi.documents('api::message.message').findMany({
+        filters: { type: { $in: ['welcome', 'notify_message'] } },
+      });
+      const messageMap = new Map(messages.map((message) => [message.type, message]));
+      const welcome = messageMap.get('welcome');
+      const notify = messageMap.get('notify_message');
+
+      if (welcome) {
+        await sendRegistrationMessage(strapi, welcome, newUser.email, newUser, 'send_notify_register');
+      }
+
+      if (notify) {
+        await sendRegistrationMessage(strapi, notify, 'htandme@brookes.ac.uk', newUser, 'send_notify_register');
+      }
 
       return ctx.send({
         jwt,

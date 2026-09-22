@@ -1,6 +1,9 @@
 import fs from 'fs/promises'
 import path from 'path'
 import * as Sentry from '@sentry/node'
+import outboundAudit from './outboundAudit.cjs'
+
+const { recordOutboundAudit } = outboundAudit
 
 /**
  * Main production-ready reminder and nudge processor.
@@ -81,7 +84,7 @@ async function sendFiretextSms(strapi, { recipient, message, contextMeta }) {
     if (typeof Sentry?.captureException === 'function') {
       Sentry.captureException(err, { extra: contextMeta })
     }
-    return
+    return false
   }
 
   try {
@@ -105,18 +108,20 @@ async function sendFiretextSms(strapi, { recipient, message, contextMeta }) {
     if (text.includes('Error') || text.includes('failed')) {
       throw new Error(`Firetext API rejected SMS: ${text}`)
     }
+    return true
   } catch (err) {
     strapi.log.error(`[FIRETEXT ERROR] Failed to send SMS to ${recipient}:`, err)
     if (typeof Sentry?.captureException === 'function') {
       Sentry.captureException(err, { extra: contextMeta })
     }
+    return false
   }
 }
 
 /**
  * Centralized Dispatch Controller (Handles Simulation vs Live & Exact Minute Check)
  */
-async function dispatchMessage(context, { user, recipient, subject, content, type, channel, scheduledDate }) {
+async function dispatchMessage(context, { user, recipient, subject, content, type, channel, scheduledDate, contextMeta = {} }) {
   const { strapi, sendMessages, capturedDispatches } = context
 
   const fullName = `${user?.firstName || ''} ${user?.lastName || ''}`.trim()
@@ -127,6 +132,7 @@ async function dispatchMessage(context, { user, recipient, subject, content, typ
     userFullName: fullName,
     userId: user?.documentId || user?.id,
     scheduledSendDate: formatLocalDateTime(scheduledDate),
+    ...contextMeta,
   }
 
   // 1. If Simulation Mode, capture to JSON array and return
@@ -166,15 +172,33 @@ async function dispatchMessage(context, { user, recipient, subject, content, typ
         text: plainText,
         html: content,
       })
+      await recordOutboundAudit(strapi, {
+        user,
+        action: actionForDispatch({ type, channel, contextMeta }),
+        channel,
+        recipient,
+        subject,
+        messageType: type,
+      })
       strapi.log.info(`[LIVE EMAIL SENT] Type: ${type} | To: ${recipient}`)
 
     } else if (channel === 'sms') {
       const plainText = content ? content.replace(/<[^>]*>?/gm, '') : ''
-      await sendFiretextSms(strapi, {
+      const smsSent = await sendFiretextSms(strapi, {
         recipient,
         message: plainText,
         contextMeta: metaContext,
       })
+      if (smsSent) {
+        await recordOutboundAudit(strapi, {
+          user,
+          action: actionForDispatch({ type, channel, contextMeta }),
+          channel,
+          recipient,
+          subject,
+          messageType: type,
+        })
+      }
       strapi.log.info(`[LIVE SMS SENT] Type: ${type} | To: ${recipient}`)
     }
   } catch (err) {
@@ -183,6 +207,21 @@ async function dispatchMessage(context, { user, recipient, subject, content, typ
       Sentry.captureException(err, { extra: metaContext })
     }
   }
+}
+
+function actionForDispatch({ type, channel, contextMeta }) {
+  const prefix = channel === 'sms' ? 'sms' : 'email'
+
+  if (type === 'daily_take') return `${prefix}_daily_reminder`
+  if (type === 'goal_review') return `${prefix}_goal_reminder`
+  if (type.startsWith('init_nudge_')) return `${prefix}_${type.replace('init_nudge_', '')}_nudge`
+  if (type.startsWith('monthly_')) {
+    return contextMeta?.reminderType === 'collect'
+      ? `${prefix}_monthly_reminder_collect`
+      : `${prefix}_monthly_reminder`
+  }
+
+  return `${prefix}_${type}`
 }
 
 function formatMessageContent(templateString, user, extraData = {}) {
@@ -262,6 +301,7 @@ async function processMonthlyReminders(context) {
         type: `monthly_${reminder.type}`,
         channel,
         scheduledDate: dueDate,
+        contextMeta: { reminderType: reminder.reminder_type },
       })
     } catch (err) {
       strapi.log.error(`Error processing monthly reminder ID ${reminder.id}:`, err)
