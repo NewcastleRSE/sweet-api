@@ -1,62 +1,59 @@
-# 🚀 Getting started with Strapi
-
-Strapi comes with a full featured [Command Line Interface](https://docs.strapi.io/dev-docs/cli) (CLI) which lets you scaffold and manage your project in seconds.
 
 
-### `develop`
+# SWEET API 
+An updated API for the SWEET HT&Me project to replace Flask/Azure storage setup.
 
-Start your Strapi application with autoReload enabled. [Learn more](https://docs.strapi.io/dev-docs/cli#strapi-develop)
 
-```
-npm run develop
-# or
-yarn develop
-```
 
-### `start`
 
-Start your Strapi application with autoReload disabled. [Learn more](https://docs.strapi.io/dev-docs/cli#strapi-start)
+### Project Team
 
-```
-npm run start
-# or
-yarn start
-```
+| Name  | Role | Affiliation
+| ------------- | ------------- | ------------- |
+| Linda Sharp  | PI | Newcastle University  |
+| Kate Court | RSE  | Newcastle Universtiy  |
 
-### `build`
+## Built With
 
-Build your admin panel. [Learn more](https://docs.strapi.io/dev-docs/cli#strapi-build)
+For full documentation see https://github.com/NewcastleRSE/sweet-frontend/wiki
 
-```
-npm run build
-# or
-yarn build
-```
+## Getting Started
 
-## ⚙️ Deployment
+### Prerequisites
 
-Strapi gives you many possible deployment options for your project including [Strapi Cloud](https://cloud.strapi.io). Browse the [deployment section of the documentation](https://docs.strapi.io/dev-docs/deployment) to find the best solution for your use case.
+Node 22
 
-```
-yarn strapi deploy
-```
+### Installation
 
-## 📚 Learn more
+`npm install`
 
-- [Resource center](https://strapi.io/resource-center) - Strapi resource center.
-- [Strapi documentation](https://docs.strapi.io) - Official Strapi documentation.
-- [Strapi tutorials](https://strapi.io/tutorials) - List of tutorials made by the core team and the community.
-- [Strapi blog](https://strapi.io/blog) - Official Strapi blog containing articles made by the Strapi team and the community.
-- [Changelog](https://strapi.io/changelog) - Find out about the Strapi product updates, new features and general improvements.
+### Running Locally
 
-Feel free to check out the [Strapi GitHub repository](https://github.com/strapi/strapi). Your feedback and contributions are welcome!
+`npm run dev`
 
-## ✨ Community
+### Running Tests
 
-- [Discord](https://discord.strapi.io) - Come chat with the Strapi community including the core team.
-- [Forum](https://forum.strapi.io/) - Place to discuss, ask questions and find answers, show your Strapi project and get feedback or just talk with other Community members.
-- [Awesome Strapi](https://github.com/strapi/awesome-strapi) - A curated list of awesome things related to Strapi.
+How to run tests on your local system.
 
----
+## Deployment
 
-<sub>🤫 Psst! [Strapi is hiring](https://strapi.io/careers).</sub>
+Instructions on how to deploy to the staging or production systems. Examples of this would include cloud, HPC or virtual machine. Deployment should be done via GitHub Workflows but information on how these work and the different triggers should go here.
+
+## Contributing
+
+### Main Branch
+Protected and can only be pushed to via pull requests. It should be considered stable and a representation of production code.
+
+### Dev Branch
+Should be considered fragile; code should compile and run, but features may be prone to errors.
+
+### Feature Branches
+A branch per feature that is being worked on.
+
+https://nvie.com/posts/a-successful-git-branching-model/
+
+## Acknowledgements
+This work was funded by a grant from the UK Research Councils, EPSRC grant ref. EP/L012345/1, “Example project title, please update”.
+
+
+
