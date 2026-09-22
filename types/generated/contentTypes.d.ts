@@ -896,7 +896,7 @@ export interface ApiProfilerProfiler extends Struct.CollectionTypeSchema {
     singularName: 'profiler';
   };
   options: {
-    draftAndPublish: true;
+    draftAndPublish: false;
   };
   attributes: {
     concernAreas: Schema.Attribute.String;
