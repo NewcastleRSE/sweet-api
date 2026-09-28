@@ -7,7 +7,7 @@
     "displayName": "goal"
   },
   "options": {
-    "draftAndPublish": true
+    "draftAndPublish": false
   },
   "pluginOptions": {},
   "attributes": {

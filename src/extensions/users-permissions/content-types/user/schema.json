@@ -86,12 +86,6 @@
       "target": "api::contact.contact",
       "mappedBy": "user"
     },
-    "diaries": {
-      "type": "relation",
-      "relation": "oneToMany",
-      "target": "api::diary.diary",
-      "mappedBy": "users_permissions_user"
-    },
     "goals": {
       "type": "relation",
       "relation": "oneToMany",

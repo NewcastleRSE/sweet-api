@@ -451,7 +451,7 @@ export interface ApiAdherenceAdherence extends Struct.CollectionTypeSchema {
     singularName: 'adherence';
   };
   options: {
-    draftAndPublish: true;
+    draftAndPublish: false;
   };
   attributes: {
     adherence: Schema.Attribute.Boolean;
@@ -525,7 +525,7 @@ export interface ApiConcernSpecificConcernSpecific
     singularName: 'concern-specific';
   };
   options: {
-    draftAndPublish: true;
+    draftAndPublish: false;
   };
   attributes: {
     concern: Schema.Attribute.String;
@@ -584,35 +584,6 @@ export interface ApiContactContact extends Struct.CollectionTypeSchema {
   };
 }
 
-export interface ApiDiaryDiary extends Struct.CollectionTypeSchema {
-  collectionName: 'diaries';
-  info: {
-    displayName: 'diary';
-    pluralName: 'diaries';
-    singularName: 'diary';
-  };
-  options: {
-    draftAndPublish: true;
-  };
-  attributes: {
-    createdAt: Schema.Attribute.DateTime;
-    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
-      Schema.Attribute.Private;
-    date: Schema.Attribute.Date;
-    locale: Schema.Attribute.String & Schema.Attribute.Private;
-    localizations: Schema.Attribute.Relation<'oneToMany', 'api::diary.diary'> &
-      Schema.Attribute.Private;
-    publishedAt: Schema.Attribute.DateTime;
-    updatedAt: Schema.Attribute.DateTime;
-    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
-      Schema.Attribute.Private;
-    users_permissions_user: Schema.Attribute.Relation<
-      'manyToOne',
-      'plugin::users-permissions.user'
-    >;
-  };
-}
-
 export interface ApiDrugDrug extends Struct.CollectionTypeSchema {
   collectionName: 'drugs';
   info: {
@@ -621,7 +592,7 @@ export interface ApiDrugDrug extends Struct.CollectionTypeSchema {
     singularName: 'drug';
   };
   options: {
-    draftAndPublish: true;
+    draftAndPublish: false;
   };
   attributes: {
     createdAt: Schema.Attribute.DateTime;
@@ -652,7 +623,7 @@ export interface ApiFavouriteFavourite extends Struct.CollectionTypeSchema {
     singularName: 'favourite';
   };
   options: {
-    draftAndPublish: true;
+    draftAndPublish: false;
   };
   attributes: {
     createdAt: Schema.Attribute.DateTime;
@@ -685,7 +656,7 @@ export interface ApiGoalGoal extends Struct.CollectionTypeSchema {
     singularName: 'goal';
   };
   options: {
-    draftAndPublish: true;
+    draftAndPublish: false;
   };
   attributes: {
     createdAt: Schema.Attribute.DateTime;
@@ -725,7 +696,7 @@ export interface ApiMessageMessage extends Struct.CollectionTypeSchema {
     singularName: 'message';
   };
   options: {
-    draftAndPublish: true;
+    draftAndPublish: false;
   };
   attributes: {
     createdAt: Schema.Attribute.DateTime;
@@ -756,7 +727,7 @@ export interface ApiMetaMeta extends Struct.CollectionTypeSchema {
     singularName: 'meta';
   };
   options: {
-    draftAndPublish: true;
+    draftAndPublish: false;
   };
   attributes: {
     createdAt: Schema.Attribute.DateTime;
@@ -790,7 +761,7 @@ export interface ApiNoteNote extends Struct.CollectionTypeSchema {
     singularName: 'note';
   };
   options: {
-    draftAndPublish: true;
+    draftAndPublish: false;
   };
   attributes: {
     createdAt: Schema.Attribute.DateTime;
@@ -863,7 +834,7 @@ export interface ApiPlanPlan extends Struct.CollectionTypeSchema {
     singularName: 'plan';
   };
   options: {
-    draftAndPublish: true;
+    draftAndPublish: false;
   };
   attributes: {
     activity: Schema.Attribute.String;
@@ -938,7 +909,7 @@ export interface ApiRegistrationCodeRegistrationCode
     singularName: 'registration-code';
   };
   options: {
-    draftAndPublish: true;
+    draftAndPublish: false;
   };
   attributes: {
     code: Schema.Attribute.String;
@@ -970,7 +941,7 @@ export interface ApiReminderReminder extends Struct.CollectionTypeSchema {
     singularName: 'reminder';
   };
   options: {
-    draftAndPublish: true;
+    draftAndPublish: false;
   };
   attributes: {
     createdAt: Schema.Attribute.DateTime;
@@ -1009,7 +980,7 @@ export interface ApiSideEffectSideEffect extends Struct.CollectionTypeSchema {
     singularName: 'side-effect';
   };
   options: {
-    draftAndPublish: true;
+    draftAndPublish: false;
   };
   attributes: {
     createdAt: Schema.Attribute.DateTime;
@@ -1047,7 +1018,7 @@ export interface ApiThoughtThought extends Struct.CollectionTypeSchema {
     singularName: 'thought';
   };
   options: {
-    draftAndPublish: true;
+    draftAndPublish: false;
   };
   attributes: {
     createdAt: Schema.Attribute.DateTime;
@@ -1081,7 +1052,7 @@ export interface ApiTunnelTunnel extends Struct.CollectionTypeSchema {
     singularName: 'tunnel';
   };
   options: {
-    draftAndPublish: true;
+    draftAndPublish: false;
   };
   attributes: {
     createdAt: Schema.Attribute.DateTime;
@@ -1664,7 +1635,6 @@ export interface PluginUsersPermissionsUser
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
     deactivated: Schema.Attribute.Boolean;
-    diaries: Schema.Attribute.Relation<'oneToMany', 'api::diary.diary'>;
     drugs: Schema.Attribute.Relation<'oneToMany', 'api::drug.drug'>;
     email: Schema.Attribute.Email &
       Schema.Attribute.Required &
@@ -1742,7 +1712,6 @@ declare module '@strapi/strapi' {
       'api::audit-log.audit-log': ApiAuditLogAuditLog;
       'api::concern-specific.concern-specific': ApiConcernSpecificConcernSpecific;
       'api::contact.contact': ApiContactContact;
-      'api::diary.diary': ApiDiaryDiary;
       'api::drug.drug': ApiDrugDrug;
       'api::favourite.favourite': ApiFavouriteFavourite;
       'api::goal.goal': ApiGoalGoal;

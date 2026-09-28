@@ -7,7 +7,7 @@
     "displayName": "registration_code"
   },
   "options": {
-    "draftAndPublish": true
+    "draftAndPublish": false
   },
   "pluginOptions": {},
   "attributes": {
