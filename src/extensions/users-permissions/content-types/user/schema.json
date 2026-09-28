@@ -78,7 +78,7 @@
       "type": "date"
     },
     "SweetID": {
-      "type": "uid"
+      "type": "string"
     },
     "contacts": {
       "type": "relation",

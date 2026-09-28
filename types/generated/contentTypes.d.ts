@@ -1682,7 +1682,7 @@ export interface PluginUsersPermissionsUser
       'oneToMany',
       'api::side-effect.side-effect'
     >;
-    SweetID: Schema.Attribute.UID;
+    SweetID: Schema.Attribute.String;
     thoughts: Schema.Attribute.Relation<'oneToMany', 'api::thought.thought'>;
     tunnels: Schema.Attribute.Relation<'manyToMany', 'api::tunnel.tunnel'>;
     updatedAt: Schema.Attribute.DateTime;
