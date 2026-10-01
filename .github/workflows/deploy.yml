@@ -30,9 +30,10 @@ jobs:
 
       - name: Prepare deployment package
         run: |
-          npm prune --omit=dev
           zip -qr release.zip . \
             -x ".git/*" \
+               "node_modules/*" \
+               "node_modules/**" \
                ".env" \
                ".env.*" \
                ".tmp/*" \
