@@ -34,6 +34,7 @@ module.exports = ({ env }) => ({
       },
       jwtManagement: 'refresh',
       sessions: {
+        accessTokenLifespan: 7 * 24 * 60 * 60,
         httpOnly: true,
       },
     },

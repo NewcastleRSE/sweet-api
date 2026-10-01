@@ -3,6 +3,7 @@ export default {
   register(/* { strapi } */) {},
 
   bootstrap({ strapi }) {
+    
     strapi.documents.use(async (context, next) => {
       const action = context.action
       const uid = context.uid
