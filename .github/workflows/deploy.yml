@@ -27,6 +27,7 @@ jobs:
       - name: Build Strapi
         run: npm run build
 
+
       - name: Prepare deployment package
         run: |
           npm prune --omit=dev
