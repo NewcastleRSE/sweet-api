@@ -1,0 +1,46 @@
+name: Deploy Strapi
+
+on:
+  push:
+    branches:
+      - dev
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: ${{ github.ref_name == 'main' && 'production' || 'staging' }}
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build Strapi
+        run: npm run build
+
+      - name: Prepare deployment package
+        run: |
+          npm prune --omit=dev
+          zip -qr release.zip . \
+            -x ".git/*" \
+               ".env" \
+               ".env.*" \
+               ".tmp/*" \
+               "public/uploads/*" \
+               "release.zip"
+
+      - name: Deploy to Azure App Service
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ vars.AZURE_WEBAPP_NAME }}
+          publish-profile: ${{ secrets.PUBLISH_PROFILE }}
+          package: release.zip
