@@ -47,6 +47,18 @@ module.exports = ({ env }) => ({
   },
   upload: {
     config: {
+      // Local uploads are used unless AZURE_STORAGE_ACCOUNT is set.
+      ...(env('AZURE_STORAGE_ACCOUNT') && {
+        provider: 'strapi-provider-upload-azure-storage-v5',
+        providerOptions: {
+          account: env('AZURE_STORAGE_ACCOUNT'),
+          accountKey: env('AZURE_STORAGE_ACCOUNT_KEY'),
+          containerName: env('AZURE_STORAGE_CONTAINER'),
+          defaultPath: env('AZURE_STORAGE_DEFAULT_PATH', 'assets'),
+          serviceBaseURL: `https://${env('AZURE_STORAGE_ACCOUNT')}.blob.core.windows.net`,
+          sizeLimit: env.int('AZURE_UPLOAD_SIZE_LIMIT', 100 * 1024 * 1024),
+        },
+      }),
       security: {
         allowedTypes: allowedMediaTypes,
         deniedTypes: deniedExecutableTypes,
