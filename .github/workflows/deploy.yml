@@ -30,10 +30,11 @@ jobs:
 
       - name: Prepare deployment package
         run: |
+          npm prune --omit=dev
+          # zip copies symlinks as files, which breaks node_modules/.bin, so skip it.
           zip -qr release.zip . \
             -x ".git/*" \
-               "node_modules/*" \
-               "node_modules/**" \
+               "node_modules/.bin/*" \
                ".env" \
                ".env.*" \
                ".tmp/*" \
