@@ -31,6 +31,7 @@ jobs:
       - name: Prepare deployment package
         run: |
           npm prune --omit=dev
+          mkdir -p public/uploads
           # zip copies symlinks as files, which breaks node_modules/.bin, so skip it.
           zip -qr release.zip . \
             -x ".git/*" \
@@ -38,7 +39,7 @@ jobs:
                ".env" \
                ".env.*" \
                ".tmp/*" \
-               "public/uploads/*" \
+               "public/uploads/?*" \
                "release.zip"
 
       - name: Deploy to Azure App Service
