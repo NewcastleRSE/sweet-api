@@ -4,7 +4,7 @@ const path = require('path');
 const { isDatabaseClientKind } = require('@strapi/database');
 
 module.exports = ({ env }) => {
-  const client = env('DATABASE_CLIENT', 'sqlite').toLowerCase();
+  const client = env('DATABASE_CLIENT', 'sqlite');
 
   if (!isDatabaseClientKind(client)) {
     throw new Error(
@@ -31,7 +31,7 @@ module.exports = ({ env }) => {
           rejectUnauthorized: env.bool('DATABASE_SSL_REJECT_UNAUTHORIZED', true),
         },
       },
-      pool: { min: env.int('DATABASE_POOL_MIN', 2), max: env.int('DATABASE_POOL_MAX', 10) },
+      pool: { min: env.int('DATABASE_POOL_MIN', 2), max: env.int('DATABASE_POOL_MAX', 20) },
     },
     postgres: {
       client: 'postgres',

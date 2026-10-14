@@ -454,66 +454,87 @@ async function processGoalReminders(context) {
 }
 
 /**
- * 4. Weekly and Monthly Nudge Messages Handler
+ * 4. Weekly and Monthly Nudge Messages Handler (Paginated)
  */
 async function processInitNudges(context) {
   const { strapi, testUserDocId } = context
 
-  const userFilters = testUserDocId ? { documentId: testUserDocId } : {}
-  const users = await strapi.entityService.findMany('plugin::users-permissions.user', {
-    filters: userFilters,
-  })
-
+  // Fetch message templates once outside the loop
   const messages = await strapi.documents('api::message.message').findMany()
   const messageMap = new Map(messages.map((m) => [m.type, m]))
 
-  for (const user of (users || [])) {
-    try {
-      if (!user.init || !user.email) continue
+  const pageSize = 50
+  let page = 1
+  let hasMore = true
 
-      const initDate = new Date(user.init)
-      initDate.setHours(8, 0, 0, 0)
+  while (hasMore) {
+    const userFilters = testUserDocId ? { documentId: testUserDocId } : {}
+    
+    // Fetch users in pages to prevent exhausting the database connection pool
+    const users = await strapi.entityService.findMany('plugin::users-permissions.user', {
+      filters: userFilters,
+      pagination: { page, pageSize },
+    })
 
-      const nudgeSchedulePlan = [
-        { type: '2_week', daysOffset: 14 },
-        { type: '1_month', monthsOffset: 1 },
-        { type: '2_month', monthsOffset: 2 },
-      ]
+    if (!users || users.length === 0) {
+      break
+    }
 
-      for (let i = 3; i <= 18; i++) {
-        nudgeSchedulePlan.push({ type: `${i}_month`, monthsOffset: i })
-      }
+    for (const user of users) {
+      try {
+        if (!user.init || !user.email) continue
 
-      for (const plan of nudgeSchedulePlan) {
-        const msgTemplate = messageMap.get(plan.type)
-        if (!msgTemplate) continue
+        const initDate = new Date(user.init)
+        initDate.setHours(8, 0, 0, 0)
 
-        const targetDate = new Date(initDate)
-        if (plan.daysOffset) {
-          targetDate.setDate(targetDate.getDate() + plan.daysOffset)
-        } else if (plan.monthsOffset) {
-          targetDate.setMonth(targetDate.getMonth() + plan.monthsOffset)
+        const nudgeSchedulePlan = [
+          { type: '2_week', daysOffset: 14 },
+          { type: '1_month', monthsOffset: 1 },
+          { type: '2_month', monthsOffset: 2 },
+        ]
+
+        for (let i = 3; i <= 18; i++) {
+          nudgeSchedulePlan.push({ type: `${i}_month`, monthsOffset: i })
         }
-        targetDate.setHours(8, 0, 0, 0)
 
-        const formattedHtml = formatMessageContent(msgTemplate.html || '', user)
-        const formattedSubject = formatMessageContent(msgTemplate.subject || 'Nudge Update', user)
+        for (const plan of nudgeSchedulePlan) {
+          const msgTemplate = messageMap.get(plan.type)
+          if (!msgTemplate) continue
 
-        await dispatchMessage(context, {
-          user,
-          recipient: user.email,
-          subject: formattedSubject,
-          content: formattedHtml,
-          type: `init_nudge_${plan.type}`,
-          channel: 'email',
-          scheduledDate: targetDate,
-        })
+          const targetDate = new Date(initDate)
+          if (plan.daysOffset) {
+            targetDate.setDate(targetDate.getDate() + plan.daysOffset)
+          } else if (plan.monthsOffset) {
+            targetDate.setMonth(targetDate.getMonth() + plan.monthsOffset)
+          }
+          targetDate.setHours(8, 0, 0, 0)
+
+          const formattedHtml = formatMessageContent(msgTemplate.html || '', user)
+          const formattedSubject = formatMessageContent(msgTemplate.subject || 'Nudge Update', user)
+
+          await dispatchMessage(context, {
+            user,
+            recipient: user.email,
+            subject: formattedSubject,
+            content: formattedHtml,
+            type: `init_nudge_${plan.type}`,
+            channel: 'email',
+            scheduledDate: targetDate,
+          })
+        }
+      } catch (err) {
+        strapi.log.error(`Error processing init nudge for user ID ${user.id}:`, err)
+        if (typeof Sentry?.captureException === 'function') {
+          Sentry.captureException(err, { extra: { userId: user.id } })
+        }
       }
-    } catch (err) {
-      strapi.log.error(`Error processing init nudge for user ID ${user.id}:`, err)
-      if (typeof Sentry?.captureException === 'function') {
-        Sentry.captureException(err, { extra: { userId: user.id } })
-      }
+    }
+
+    // Stop looping if we've received fewer items than the page size (last page)
+    if (users.length < pageSize) {
+      hasMore = false
+    } else {
+      page++
     }
   }
 }
