@@ -13,4 +13,9 @@ export default ({ env }) => ({
     enabled: env.bool('CRON_ENABLED', true), 
     tasks: cronTasks,
   },
+  transfer: {
+  remote: {
+    enabled: true,
+  },
+  },
 });
