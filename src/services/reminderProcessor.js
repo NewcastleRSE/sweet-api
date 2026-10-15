@@ -5,34 +5,66 @@ import outboundAudit from './outboundAudit.cjs'
 
 const { recordOutboundAudit } = outboundAudit
 
-/**
- * Main production-ready reminder and nudge processor.
- */
-export async function runReminderProcessor(customStrapi = null) {
-  const activeStrapi = customStrapi || global.strapi
+// Concurrency guards to prevent overlapping runs
+let isMinuteProcessorRunning = false
+let isBulkProcessorRunning = false
 
-  if (!activeStrapi) {
-    console.error('Strapi instance is not available in reminderProcessor.')
+/**
+ * 1. Fast Minute Processor (Runs every minute - lightweight & optimized)
+ */
+export async function runMinuteProcessor(customStrapi = null) {
+  const activeStrapi = customStrapi || global.strapi
+  if (!activeStrapi) return
+
+  if (isMinuteProcessorRunning) {
+    activeStrapi.log.warn('[MINUTE PROCESSOR] Previous minute run still in progress. Skipping.')
     return
   }
 
-  const sendMessages = process.env.SEND_MESSAGES === 'true'
-  const testUserDocId = process.env.TEST_USER_DOCUMENT_ID
-  const capturedDispatches = []
-
-  if (!sendMessages) {
-    activeStrapi.log.info('[REMINDER PROCESSOR] Running in SIMULATION mode (SEND_MESSAGES=false). Dispatches will be written to JSON.')
-  } else {
-    activeStrapi.log.info('[REMINDER PROCESSOR] Running in LIVE production mode (SEND_MESSAGES=true).')
-  }
-
-  if (testUserDocId) {
-    activeStrapi.log.info(`[TEST SCOPE] Scoped strictly to Test User Document ID: ${testUserDocId}`)
-  }
+  isMinuteProcessorRunning = true
 
   try {
     const today = new Date()
     today.setHours(0, 0, 0, 0)
+
+    const context = {
+      strapi: activeStrapi,
+      today,
+      sendMessages: process.env.SEND_MESSAGES === 'true',
+      capturedDispatches: [],
+    }
+
+    await processDailyTakeReminders(context)
+  } catch (error) {
+    activeStrapi.log.error('Critical error in minute processor:', error)
+    if (typeof Sentry?.captureException === 'function') {
+      Sentry.captureException(error)
+    }
+  } finally {
+    isMinuteProcessorRunning = false
+  }
+}
+
+/**
+ * 2. Heavy Bulk Processor (Runs hourly/daily - sweeps monthly, goals, and init nudges)
+ */
+export async function runBulkProcessor(customStrapi = null) {
+  const activeStrapi = customStrapi || global.strapi
+  if (!activeStrapi) return
+
+  if (isBulkProcessorRunning) {
+    activeStrapi.log.warn('[BULK PROCESSOR] Previous bulk run still in progress. Skipping.')
+    return
+  }
+
+  isBulkProcessorRunning = true
+
+  try {
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    const testUserDocId = process.env.TEST_USER_DOCUMENT_ID
+    const capturedDispatches = []
+    const sendMessages = process.env.SEND_MESSAGES === 'true'
 
     const context = {
       strapi: activeStrapi,
@@ -43,25 +75,28 @@ export async function runReminderProcessor(customStrapi = null) {
     }
 
     await processMonthlyReminders(context)
-    await processDailyTakeReminders(context)
     await processGoalReminders(context)
     await processInitNudges(context)
 
-    // Write to JSON only if simulation mode is active
-    if (!sendMessages) {
+    if (!sendMessages && capturedDispatches.length > 0) {
       const outputPath = path.join(process.cwd(), 'all_test_dispatches.json')
       await fs.writeFile(outputPath, JSON.stringify(capturedDispatches, null, 2), 'utf-8')
-      activeStrapi.log.info(`[JOB COMPLETE] Simulation complete. Wrote ${capturedDispatches.length} scheduled scenarios to ${outputPath}`)
-    } else {
-      activeStrapi.log.info(`[JOB COMPLETE] Live reminder check finished. Processed for active schedule window.`)
+      activeStrapi.log.info(`[BULK JOB COMPLETE] Wrote ${capturedDispatches.length} simulated dispatches.`)
     }
-
   } catch (error) {
-    activeStrapi.log.error('Critical error in reminder processor main execution:', error)
+    activeStrapi.log.error('Critical error in bulk processor:', error)
     if (typeof Sentry?.captureException === 'function') {
-      Sentry.captureException(error, { extra: { context: 'runReminderProcessor main catch' } })
+      Sentry.captureException(error)
     }
+  } finally {
+    isBulkProcessorRunning = false
   }
+}
+
+// Backward compatibility wrapper
+export async function runReminderProcessor(customStrapi = null) {
+  await runMinuteProcessor(customStrapi)
+  await runBulkProcessor(customStrapi)
 }
 
 /**
@@ -119,7 +154,7 @@ async function sendFiretextSms(strapi, { recipient, message, contextMeta }) {
 }
 
 /**
- * Centralized Dispatch Controller (Handles Simulation vs Live & Exact Minute Check)
+ * Centralized Dispatch Controller
  */
 async function dispatchMessage(context, { user, recipient, subject, content, type, channel, scheduledDate, contextMeta = {} }) {
   const { strapi, sendMessages, capturedDispatches } = context
@@ -135,7 +170,6 @@ async function dispatchMessage(context, { user, recipient, subject, content, typ
     ...contextMeta,
   }
 
-  // 1. If Simulation Mode, capture to JSON array and return
   if (!sendMessages) {
     capturedDispatches.push({
       timestampGenerated: formatLocalDateTime(new Date()),
@@ -146,7 +180,7 @@ async function dispatchMessage(context, { user, recipient, subject, content, typ
     return
   }
 
-  // 2. Precise Minute Check for Live Production Mode
+  // Precise Minute Check for Live Production Mode
   const now = new Date()
   const isDueToday = 
     scheduledDate.getFullYear() === now.getFullYear() &&
@@ -158,10 +192,9 @@ async function dispatchMessage(context, { user, recipient, subject, content, typ
     scheduledDate.getMinutes() === now.getMinutes()
 
   if (!isDueToday || !isDueThisMinute) {
-    return // Not due this exact minute; skip silently
+    return
   }
 
-  // 3. Execute Live Dispatch
   try {
     if (channel === 'email') {
       const plainText = content ? content.replace(/<[^>]*>?/gm, '') : ''
@@ -239,281 +272,334 @@ function formatMessageContent(templateString, user, extraData = {}) {
 }
 
 /**
- * 1. Monthly Reminders Handler
+ * 2. Daily Take Reminders Handler (Fixed Email Recipient Resolution)
+ */
+async function processDailyTakeReminders(context) {
+  const { strapi, today } = context
+  const testUserDocId = process.env.TEST_USER_DOCUMENT_ID
+
+  const messages = await strapi.documents('api::message.message').findMany()
+  const messageMap = new Map(messages.map((m) => [m.type, m]))
+
+  const pageSize = 50
+  let page = 1
+  let hasMore = true
+
+  while (hasMore) {
+    const queryFilters = {
+      type: 'take',
+      ...(testUserDocId ? { user: { documentId: testUserDocId } } : {}),
+    }
+
+    const reminders = await strapi.documents('api::reminder.reminder').findMany({
+      filters: queryFilters,
+      populate: { user: true },
+      pagination: { page, pageSize },
+    })
+
+    if (!reminders || reminders.length === 0) {
+      break
+    }
+
+    for (const reminder of reminders) {
+      try {
+        const user = reminder.user
+        if (!user) continue
+
+        const msgTemplate = messageMap.get('take')
+        if (!msgTemplate) continue
+
+        const method = (reminder.method || user.contact_preference || 'email').toLowerCase()
+        const channel = method === 'sms' ? 'sms' : 'email'
+
+        let recipient = null
+        if (channel === 'sms') {
+          recipient = (reminder.to && !reminder.to.includes('@')) ? reminder.to : (user.mobile || user.phone)
+        } else {
+          // Explicitly target email fields for email channels
+          recipient = (reminder.to && reminder.to.includes('@')) ? reminder.to : (user.email || null)
+        }
+
+        if (!recipient) {
+          strapi.log.warn(`[SKIP] Daily take reminder ID ${reminder.id} for user ${user.id} skipped: No valid ${channel} recipient found.`)
+          continue
+        }
+
+        const timeStr = reminder.time || '08:00'
+        const [hours = '8', minutes = '0'] = timeStr.split(':')
+
+        const scheduledDate = new Date(today)
+        scheduledDate.setHours(parseInt(hours, 10), parseInt(minutes, 10), 0, 0)
+
+        const formattedHtml = formatMessageContent(msgTemplate.html || '', user)
+        const formattedSubject = formatMessageContent(msgTemplate.subject || 'Daily Take Reminder', user)
+        const plainTemplate = msgTemplate.plain || (msgTemplate.html ? msgTemplate.html.replace(/<[^>]*>?/gm, '') : '')
+        const contentToSend = channel === 'email' ? formattedHtml : formatMessageContent(plainTemplate, user)
+
+        await dispatchMessage(context, {
+          user,
+          recipient,
+          subject: formattedSubject,
+          content: contentToSend,
+          type: 'daily_take',
+          channel,
+          scheduledDate: scheduledDate,
+        })
+      } catch (err) {
+        strapi.log.error(`Error processing take reminder ID ${reminder.id}:`, err)
+        if (typeof Sentry?.captureException === 'function') {
+          Sentry.captureException(err, { extra: { reminderId: reminder.id } })
+        }
+      }
+    }
+
+    if (reminders.length < pageSize) {
+      hasMore = false
+    } else {
+      page++
+    }
+  }
+}
+
+/**
+ * Monthly Reminders Handler (Paginated)
  */
 async function processMonthlyReminders(context) {
   const { strapi, testUserDocId } = context
 
-  const queryFilters = testUserDocId ? { user: { documentId: testUserDocId } } : {}
-  const reminders = await strapi.documents('api::reminder.reminder').findMany({
-    filters: queryFilters,
-    populate: { user: true },
-  })
-
   const messages = await strapi.documents('api::message.message').findMany()
   const messageMap = new Map(messages.map((m) => [m.type, m]))
 
-  for (const reminder of (reminders || [])) {
-    try {
-      if (reminder.type === 'take') continue
+  const pageSize = 50
+  let page = 1
+  let hasMore = true
 
-      const user = reminder.user
-      if (!user) continue
+  while (hasMore) {
+    const queryFilters = {
+      type: { $ne: 'take' },
+      ...(testUserDocId ? { user: { documentId: testUserDocId } } : {}),
+    }
 
-      const method = (reminder.method || user.contact_preference || 'email').toLowerCase()
-      const channel = method === 'sms' ? 'sms' : 'email'
+    const reminders = await strapi.documents('api::reminder.reminder').findMany({
+      filters: queryFilters,
+      populate: { user: true },
+      pagination: { page, pageSize },
+    })
 
-      let recipient = null
-      if (channel === 'sms') {
-        recipient = (reminder.to && !reminder.to.includes('@')) ? reminder.to : (user.mobile || user.phone)
-      } else {
-        recipient = (reminder.to && reminder.to.includes('@')) ? reminder.to : (user.email || user.mobile)
-      }
+    if (!reminders || reminders.length === 0) break
 
-      if (!recipient) continue
+    for (const reminder of reminders) {
+      try {
+        const user = reminder.user
+        if (!user) continue
 
-      const baselineDateStr = reminder.lastSent || reminder.start
-      if (!baselineDateStr) continue
+        const method = (reminder.method || user.contact_preference || 'email').toLowerCase()
+        const channel = method === 'sms' ? 'sms' : 'email'
 
-      const baselineDate = new Date(baselineDateStr)
-      const freqMonths = reminder.frequency === 'three' ? 3 : reminder.frequency === 'two' ? 2 : 1
+let recipient = null
+if (channel === 'sms') {
+  recipient = (reminder.to && !reminder.to.includes('@')) ? reminder.to : (user.mobile || user.phone)
+} else {
+  recipient = (reminder.to && reminder.to.includes('@')) ? reminder.to : (user.email || null)
+}
 
-      const dueDate = new Date(baselineDate)
-      dueDate.setMonth(dueDate.getMonth() + freqMonths)
+        if (!recipient) continue
 
-      const timeStr = reminder.time || '08:00'
-      const [hours = '8', minutes = '0'] = timeStr.split(':')
-      dueDate.setHours(parseInt(hours, 10), parseInt(minutes, 10), 0, 0)
+        const baselineDateStr = reminder.lastSent || reminder.start
+        if (!baselineDateStr) continue
 
-      const msgTemplate = messageMap.get(reminder.type)
-      if (!msgTemplate) continue
+        const baselineDate = new Date(baselineDateStr)
+        const freqMonths = reminder.frequency === 'three' ? 3 : reminder.frequency === 'two' ? 2 : 1
 
-      const formattedHtml = formatMessageContent(msgTemplate.html || '', user)
-      const formattedSubject = formatMessageContent(msgTemplate.subject || 'Reminder', user)
-      const plainTemplate = msgTemplate.plain || (msgTemplate.html ? msgTemplate.html.replace(/<[^>]*>?/gm, '') : '')
-      const contentToSend = channel === 'email' ? formattedHtml : formatMessageContent(plainTemplate, user)
+        const dueDate = new Date(baselineDate)
+        dueDate.setMonth(dueDate.getMonth() + freqMonths)
 
-      await dispatchMessage(context, {
-        user,
-        recipient,
-        subject: formattedSubject,
-        content: contentToSend,
-        type: `monthly_${reminder.type}`,
-        channel,
-        scheduledDate: dueDate,
-        contextMeta: { reminderType: reminder.reminder_type },
-      })
-    } catch (err) {
-      strapi.log.error(`Error processing monthly reminder ID ${reminder.id}:`, err)
-      if (typeof Sentry?.captureException === 'function') {
-        Sentry.captureException(err, { extra: { reminderId: reminder.id, type: reminder.type } })
+        const timeStr = reminder.time || '08:00'
+        const [hours = '8', minutes = '0'] = timeStr.split(':')
+        dueDate.setHours(parseInt(hours, 10), parseInt(minutes, 10), 0, 0)
+
+        const msgTemplate = messageMap.get(reminder.type)
+        if (!msgTemplate) continue
+
+        const formattedHtml = formatMessageContent(msgTemplate.html || '', user)
+        const formattedSubject = formatMessageContent(msgTemplate.subject || 'Reminder', user)
+        const plainTemplate = msgTemplate.plain || (msgTemplate.html ? msgTemplate.html.replace(/<[^>]*>?/gm, '') : '')
+        const contentToSend = channel === 'email' ? formattedHtml : formatMessageContent(plainTemplate, user)
+
+        await dispatchMessage(context, {
+          user,
+          recipient,
+          subject: formattedSubject,
+          content: contentToSend,
+          type: `monthly_${reminder.type}`,
+          channel,
+          scheduledDate: dueDate,
+          contextMeta: { reminderType: reminder.reminder_type },
+        })
+      } catch (err) {
+        strapi.log.error(`Error processing monthly reminder ID ${reminder.id}:`, err)
+        if (typeof Sentry?.captureException === 'function') {
+          Sentry.captureException(err, { extra: { reminderId: reminder.id } })
+        }
       }
     }
+
+    if (reminders.length < pageSize) hasMore = false
+    else page++
   }
 }
 
 /**
- * 2. Daily Take Reminders Handler
- */
-async function processDailyTakeReminders(context) {
-  const { strapi, today, testUserDocId } = context
-
-  const queryFilters = { type: 'take' }
-  if (testUserDocId) {
-    queryFilters.user = { documentId: testUserDocId }
-  }
-
-  const reminders = await strapi.documents('api::reminder.reminder').findMany({
-    filters: queryFilters,
-    populate: { user: true },
-  })
-
-  const messages = await strapi.documents('api::message.message').findMany()
-  const messageMap = new Map(messages.map((m) => [m.type, m]))
-
-  for (const reminder of (reminders || [])) {
-    try {
-      const user = reminder.user
-      if (!user) continue
-
-      const msgTemplate = messageMap.get('take')
-      if (!msgTemplate) continue
-
-      const method = (reminder.method || user.contact_preference || 'email').toLowerCase()
-      const channel = method === 'sms' ? 'sms' : 'email'
-
-      let recipient = null
-      if (channel === 'sms') {
-        recipient = (reminder.to && !reminder.to.includes('@')) ? reminder.to : (user.mobile || user.phone)
-      } else {
-        recipient = (reminder.to && reminder.to.includes('@')) ? reminder.to : (user.email || user.mobile)
-      }
-
-      if (!recipient) continue
-
-      const timeStr = reminder.time || '08:00'
-      const [hours = '8', minutes = '0'] = timeStr.split(':')
-
-      const scheduledDate = new Date(today)
-      scheduledDate.setHours(parseInt(hours, 10), parseInt(minutes, 10), 0, 0)
-
-      const formattedHtml = formatMessageContent(msgTemplate.html || '', user)
-      const formattedSubject = formatMessageContent(msgTemplate.subject || 'Daily Take Reminder', user)
-      const plainTemplate = msgTemplate.plain || (msgTemplate.html ? msgTemplate.html.replace(/<[^>]*>?/gm, '') : '')
-      const contentToSend = channel === 'email' ? formattedHtml : formatMessageContent(plainTemplate, user)
-
-      await dispatchMessage(context, {
-        user,
-        recipient,
-        subject: formattedSubject,
-        content: contentToSend,
-        type: 'daily_take',
-        channel,
-        scheduledDate: scheduledDate,
-      })
-    } catch (err) {
-      strapi.log.error(`Error processing take reminder ID ${reminder.id}:`, err)
-      if (typeof Sentry?.captureException === 'function') {
-        Sentry.captureException(err, { extra: { reminderId: reminder.id } })
-      }
-    }
-  }
-}
-
-/**
- * 3. Goal Review Reminders Handler
+ * Goal Review Reminders Handler (Paginated)
  */
 async function processGoalReminders(context) {
   const { strapi, testUserDocId } = context
-
-  const queryFilters = testUserDocId ? { user: { documentId: testUserDocId } } : {}
-  const goals = await strapi.documents('api::goal.goal').findMany({
-    filters: queryFilters,
-    populate: { user: true },
-  })
 
   const messages = await strapi.documents('api::message.message').findMany()
   const goalMsgTemplate = messages.find((m) => m.type === 'goal_reminder')
   if (!goalMsgTemplate) return
 
-  for (const goal of (goals || [])) {
-    try {
-      if (!goal.reviewDate) continue
+  const pageSize = 50
+  let page = 1
+  let hasMore = true
 
-      const goalStatus = (goal.goal_status || '').toLowerCase()
-      if (goalStatus !== 'active') continue
+  while (hasMore) {
+    const queryFilters = {
+      goal_status: 'active',
+      ...(testUserDocId ? { user: { documentId: testUserDocId } } : {}),
+    }
 
-      const user = goal.user
-      if (!user) continue
+    const goals = await strapi.documents('api::goal.goal').findMany({
+      filters: queryFilters,
+      populate: { user: true },
+      pagination: { page, pageSize },
+    })
 
-      const method = (user.contact_preference || 'email').toLowerCase()
-      const channel = method === 'sms' ? 'sms' : 'email'
+    if (!goals || goals.length === 0) break
 
-      let recipient = null
-      if (channel === 'sms') {
-        recipient = user.mobile || user.phone
-      } else {
-        recipient = user.email || user.mobile
-      }
-      if (!recipient) continue
+    for (const goal of goals) {
+      try {
+        if (!goal.reviewDate) continue
+        const user = goal.user
+        if (!user) continue
 
-      const reviewDate = new Date(goal.reviewDate)
-      if (isNaN(reviewDate.getTime())) continue
+        const method = (user.contact_preference || 'email').toLowerCase()
+        const channel = method === 'sms' ? 'sms' : 'email'
 
-      const timeStr = goal.time || '09:00'
-      const [hours = '9', minutes = '0'] = timeStr.split(':')
-      reviewDate.setHours(parseInt(hours, 10), parseInt(minutes, 10), 0, 0)
+        let recipient = channel === 'sms' ? (user.mobile || user.phone) : (user.email || null)
+        if (!recipient) continue
 
-      const shortType = goal.goaltype || 'goal'
-      const longType = shortType.toLowerCase() === 'activity' ? 'being active' : 'eating healthily'
+        const reviewDate = new Date(goal.reviewDate)
+        if (isNaN(reviewDate.getTime())) continue
 
-      const formattedHtml = formatMessageContent(goalMsgTemplate.html || '', user, {
-        shorttype: shortType,
-        longtype: longType,
-      })
-      const formattedSubject = formatMessageContent(goalMsgTemplate.subject || 'Goal Review', user)
-      const plainTemplate = goalMsgTemplate.plain || (goalMsgTemplate.html ? goalMsgTemplate.html.replace(/<[^>]*>?/gm, '') : '')
-      const contentToSend = channel === 'email' ? formattedHtml : formatMessageContent(plainTemplate, user, { shorttype: shortType, longtype: longType })
+        const timeStr = goal.time || '09:00'
+        const [hours = '9', minutes = '0'] = timeStr.split(':')
+        reviewDate.setHours(parseInt(hours, 10), parseInt(minutes, 10), 0, 0)
 
-      await dispatchMessage(context, {
-        user,
-        recipient,
-        subject: formattedSubject,
-        content: contentToSend,
-        type: 'goal_review',
-        channel,
-        scheduledDate: reviewDate,
-      })
-    } catch (err) {
-      strapi.log.error(`Error processing goal review for goal ID ${goal.id}:`, err)
-      if (typeof Sentry?.captureException === 'function') {
-        Sentry.captureException(err, { extra: { goalId: goal.id } })
+        const shortType = goal.goaltype || 'goal'
+        const longType = shortType.toLowerCase() === 'activity' ? 'being active' : 'eating healthily'
+
+        const formattedHtml = formatMessageContent(goalMsgTemplate.html || '', user, { shorttype: shortType, longtype: longType })
+        const formattedSubject = formatMessageContent(goalMsgTemplate.subject || 'Goal Review', user)
+        const plainTemplate = goalMsgTemplate.plain || (goalMsgTemplate.html ? goalMsgTemplate.html.replace(/<[^>]*>?/gm, '') : '')
+        const contentToSend = channel === 'email' ? formattedHtml : formatMessageContent(plainTemplate, user, { shorttype: shortType, longtype: longType })
+
+        await dispatchMessage(context, {
+          user,
+          recipient,
+          subject: formattedSubject,
+          content: contentToSend,
+          type: 'goal_review',
+          channel,
+          scheduledDate: reviewDate,
+        })
+      } catch (err) {
+        strapi.log.error(`Error processing goal review for goal ID ${goal.id}:`, err)
+        if (typeof Sentry?.captureException === 'function') {
+          Sentry.captureException(err, { extra: { goalId: goal.id } })
+        }
       }
     }
+
+    if (goals.length < pageSize) hasMore = false
+    else page++
   }
 }
 
 /**
- * 4. Weekly and Monthly Nudge Messages Handler
+ * Weekly and Monthly Nudge Messages Handler (Paginated)
  */
 async function processInitNudges(context) {
   const { strapi, testUserDocId } = context
 
-  const userFilters = testUserDocId ? { documentId: testUserDocId } : {}
-  const users = await strapi.entityService.findMany('plugin::users-permissions.user', {
-    filters: userFilters,
-  })
-
   const messages = await strapi.documents('api::message.message').findMany()
   const messageMap = new Map(messages.map((m) => [m.type, m]))
 
-  for (const user of (users || [])) {
-    try {
-      if (!user.init || !user.email) continue
+  const pageSize = 50
+  let page = 1
+  let hasMore = true
 
-      const initDate = new Date(user.init)
-      initDate.setHours(8, 0, 0, 0)
+  while (hasMore) {
+    const userFilters = testUserDocId ? { documentId: testUserDocId } : {}
+    
+    const users = await strapi.entityService.findMany('plugin::users-permissions.user', {
+      filters: userFilters,
+      pagination: { page, pageSize },
+    })
 
-      const nudgeSchedulePlan = [
-        { type: '2_week', daysOffset: 14 },
-        { type: '1_month', monthsOffset: 1 },
-        { type: '2_month', monthsOffset: 2 },
-      ]
+    if (!users || users.length === 0) break
 
-      for (let i = 3; i <= 18; i++) {
-        nudgeSchedulePlan.push({ type: `${i}_month`, monthsOffset: i })
-      }
+    for (const user of users) {
+      try {
+        if (!user.init || !user.email) continue
 
-      for (const plan of nudgeSchedulePlan) {
-        const msgTemplate = messageMap.get(plan.type)
-        if (!msgTemplate) continue
+        const initDate = new Date(user.init)
+        initDate.setHours(8, 0, 0, 0)
 
-        const targetDate = new Date(initDate)
-        if (plan.daysOffset) {
-          targetDate.setDate(targetDate.getDate() + plan.daysOffset)
-        } else if (plan.monthsOffset) {
-          targetDate.setMonth(targetDate.getMonth() + plan.monthsOffset)
+        const nudgeSchedulePlan = [
+          { type: '2_week', daysOffset: 14 },
+          { type: '1_month', monthsOffset: 1 },
+          { type: '2_month', monthsOffset: 2 },
+        ]
+
+        for (let i = 3; i <= 18; i++) {
+          nudgeSchedulePlan.push({ type: `${i}_month`, monthsOffset: i })
         }
-        targetDate.setHours(8, 0, 0, 0)
 
-        const formattedHtml = formatMessageContent(msgTemplate.html || '', user)
-        const formattedSubject = formatMessageContent(msgTemplate.subject || 'Nudge Update', user)
+        for (const plan of nudgeSchedulePlan) {
+          const msgTemplate = messageMap.get(plan.type)
+          if (!msgTemplate) continue
 
-        await dispatchMessage(context, {
-          user,
-          recipient: user.email,
-          subject: formattedSubject,
-          content: formattedHtml,
-          type: `init_nudge_${plan.type}`,
-          channel: 'email',
-          scheduledDate: targetDate,
-        })
-      }
-    } catch (err) {
-      strapi.log.error(`Error processing init nudge for user ID ${user.id}:`, err)
-      if (typeof Sentry?.captureException === 'function') {
-        Sentry.captureException(err, { extra: { userId: user.id } })
+          const targetDate = new Date(initDate)
+          if (plan.daysOffset) {
+            targetDate.setDate(targetDate.getDate() + plan.daysOffset)
+          } else if (plan.monthsOffset) {
+            targetDate.setMonth(targetDate.getMonth() + plan.monthsOffset)
+          }
+          targetDate.setHours(8, 0, 0, 0)
+
+          const formattedHtml = formatMessageContent(msgTemplate.html || '', user)
+          const formattedSubject = formatMessageContent(msgTemplate.subject || 'Nudge Update', user)
+
+          await dispatchMessage(context, {
+            user,
+            recipient: user.email,
+            subject: formattedSubject,
+            content: formattedHtml,
+            type: `init_nudge_${plan.type}`,
+            channel: 'email',
+            scheduledDate: targetDate,
+          })
+        }
+      } catch (err) {
+        strapi.log.error(`Error processing init nudge for user ID ${user.id}:`, err)
+        if (typeof Sentry?.captureException === 'function') {
+          Sentry.captureException(err, { extra: { userId: user.id } })
+        }
       }
     }
+
+    if (users.length < pageSize) hasMore = false
+    else page++
   }
 }

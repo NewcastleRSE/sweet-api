@@ -1,3 +1,5 @@
+// @ts-nocheck 
+// 
 async function recordOutboundAudit(strapi, { user, action, channel, recipient, subject, messageType }) {
   try {
     await strapi.documents('api::audit-log.audit-log').create({
