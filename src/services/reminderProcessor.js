@@ -34,7 +34,6 @@ export async function runMinuteProcessor(customStrapi = null) {
       capturedDispatches: [],
     }
 
-    // Only run time-sensitive minute checks here
     await processDailyTakeReminders(context)
   } catch (error) {
     activeStrapi.log.error('Critical error in minute processor:', error)
@@ -94,7 +93,7 @@ export async function runBulkProcessor(customStrapi = null) {
   }
 }
 
-// Backward compatibility wrapper if anything else imports runReminderProcessor
+// Backward compatibility wrapper
 export async function runReminderProcessor(customStrapi = null) {
   await runMinuteProcessor(customStrapi)
   await runBulkProcessor(customStrapi)
@@ -273,15 +272,11 @@ function formatMessageContent(templateString, user, extraData = {}) {
 }
 
 /**
- * 2. Daily Take Reminders Handler (Database-level time filter)
+ * 2. Daily Take Reminders Handler (Paginated & safe JS filtering)
  */
 async function processDailyTakeReminders(context) {
   const { strapi, today } = context
   const testUserDocId = process.env.TEST_USER_DOCUMENT_ID
-
-  const now = new Date()
-  const pad = (n) => String(n).padStart(2, '0')
-  const targetTimeString = `${pad(now.getHours())}:${pad(now.getMinutes())}`
 
   const messages = await strapi.documents('api::message.message').findMany()
   const messageMap = new Map(messages.map((m) => [m.type, m]))
@@ -293,7 +288,6 @@ async function processDailyTakeReminders(context) {
   while (hasMore) {
     const queryFilters = {
       type: 'take',
-      time: targetTimeString, // DB filters directly by the current minute's time string
       ...(testUserDocId ? { user: { documentId: testUserDocId } } : {}),
     }
 
@@ -327,8 +321,11 @@ async function processDailyTakeReminders(context) {
 
         if (!recipient) continue
 
+        const timeStr = reminder.time || '08:00'
+        const [hours = '8', minutes = '0'] = timeStr.split(':')
+
         const scheduledDate = new Date(today)
-        scheduledDate.setHours(now.getHours(), now.getMinutes(), 0, 0)
+        scheduledDate.setHours(parseInt(hours, 10), parseInt(minutes, 10), 0, 0)
 
         const formattedHtml = formatMessageContent(msgTemplate.html || '', user)
         const formattedSubject = formatMessageContent(msgTemplate.subject || 'Daily Take Reminder', user)
