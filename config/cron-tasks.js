@@ -1,15 +1,26 @@
-// config/cron-tasks.js (or config/cron-tasks.ts)
-import { runReminderProcessor } from '../src/services/reminderProcessor.js';
+// config/cron-tasks.js
+import { runMinuteProcessor, runBulkProcessor } from '../src/services/reminderProcessor.js';
 
 export default {
-  // Give your job a unique name (avoid anonymous key formats)
-  reminderJob: {
+  // Fast task running every minute strictly for time-sensitive notifications
+  minuteReminderJob: {
     task: async ({ strapi }) => {
-      strapi.log.info('Executing scheduled reminder cron job...');
-      await runReminderProcessor(strapi);
+      strapi.log.info('Executing minute reminder check...');
+      await runMinuteProcessor(strapi);
     },
     options: {
-      rule: '* * * * *', // Run every minute
+      rule: '* * * * *', // Every minute
+    },
+  },
+
+  // Heavy task running once an hour for bulk sweeps (monthly, goals, init nudges)
+  bulkReminderJob: {
+    task: async ({ strapi }) => {
+      strapi.log.info('Executing bulk reminder/nudge check...');
+      await runBulkProcessor(strapi);
+    },
+    options: {
+      rule: '0 * * * *', // Once every hour
     },
   },
 };
