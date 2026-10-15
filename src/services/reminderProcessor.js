@@ -272,7 +272,7 @@ function formatMessageContent(templateString, user, extraData = {}) {
 }
 
 /**
- * 2. Daily Take Reminders Handler (Paginated & safe JS filtering)
+ * 2. Daily Take Reminders Handler (Fixed Email Recipient Resolution)
  */
 async function processDailyTakeReminders(context) {
   const { strapi, today } = context
@@ -316,10 +316,14 @@ async function processDailyTakeReminders(context) {
         if (channel === 'sms') {
           recipient = (reminder.to && !reminder.to.includes('@')) ? reminder.to : (user.mobile || user.phone)
         } else {
-          recipient = (reminder.to && reminder.to.includes('@')) ? reminder.to : (user.email || user.mobile)
+          // Explicitly target email fields for email channels
+          recipient = (reminder.to && reminder.to.includes('@')) ? reminder.to : (user.email || null)
         }
 
-        if (!recipient) continue
+        if (!recipient) {
+          strapi.log.warn(`[SKIP] Daily take reminder ID ${reminder.id} for user ${user.id} skipped: No valid ${channel} recipient found.`)
+          continue
+        }
 
         const timeStr = reminder.time || '08:00'
         const [hours = '8', minutes = '0'] = timeStr.split(':')
@@ -392,12 +396,12 @@ async function processMonthlyReminders(context) {
         const method = (reminder.method || user.contact_preference || 'email').toLowerCase()
         const channel = method === 'sms' ? 'sms' : 'email'
 
-        let recipient = null
-        if (channel === 'sms') {
-          recipient = (reminder.to && !reminder.to.includes('@')) ? reminder.to : (user.mobile || user.phone)
-        } else {
-          recipient = (reminder.to && reminder.to.includes('@')) ? reminder.to : (user.email || user.mobile)
-        }
+let recipient = null
+if (channel === 'sms') {
+  recipient = (reminder.to && !reminder.to.includes('@')) ? reminder.to : (user.mobile || user.phone)
+} else {
+  recipient = (reminder.to && reminder.to.includes('@')) ? reminder.to : (user.email || null)
+}
 
         if (!recipient) continue
 
@@ -482,7 +486,7 @@ async function processGoalReminders(context) {
         const method = (user.contact_preference || 'email').toLowerCase()
         const channel = method === 'sms' ? 'sms' : 'email'
 
-        let recipient = channel === 'sms' ? (user.mobile || user.phone) : (user.email || user.mobile)
+        let recipient = channel === 'sms' ? (user.mobile || user.phone) : (user.email || null)
         if (!recipient) continue
 
         const reviewDate = new Date(goal.reviewDate)
