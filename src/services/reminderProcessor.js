@@ -10,6 +10,17 @@ let isMinuteProcessorRunning = false
 let isBulkProcessorRunning = false
 
 /**
+ * Helper to detect if running in the Azure Staging environment
+ */
+function isStagingEnvironment() {
+  return (
+    process.env.NODE_ENV === 'staging' ||
+    process.env.ENVIRONMENT === 'staging' ||
+    process.env.WEBSITE_HOSTNAME === 'staging-sweet-strapi-bscvhtg7aqcxexft.ukwest-01.azurewebsites.net'
+  )
+}
+
+/**
  * 1. Fast Minute Processor (Runs every minute - lightweight & optimized)
  */
 export async function runMinuteProcessor(customStrapi = null) {
@@ -154,10 +165,25 @@ async function sendFiretextSms(strapi, { recipient, message, contextMeta }) {
 }
 
 /**
- * Centralized Dispatch Controller
+ * Centralized Dispatch Controller (Handles Staging Prepending)
  */
 async function dispatchMessage(context, { user, recipient, subject, content, type, channel, scheduledDate, contextMeta = {} }) {
   const { strapi, sendMessages, capturedDispatches } = context
+
+  let finalSubject = subject
+  let finalContent = content
+
+  // Prepend [STAGING] if running in the staging environment
+  if (isStagingEnvironment()) {
+    if (finalSubject) {
+      finalSubject = `[STAGING] ${finalSubject}`
+    }
+    if (channel === 'sms' && finalContent) {
+      finalContent = `[STAGING] ${finalContent}`
+    } else if (channel === 'email' && finalContent) {
+      finalContent = `<p style="background-color: #fff3cd; color: #856404; padding: 10px; border: 1px solid #ffeeba;"><strong>[STAGING ENVIRONMENT]</strong></p>` + finalContent
+    }
+  }
 
   const fullName = `${user?.firstName || ''} ${user?.lastName || ''}`.trim()
   const metaContext = {
@@ -174,8 +200,8 @@ async function dispatchMessage(context, { user, recipient, subject, content, typ
     capturedDispatches.push({
       timestampGenerated: formatLocalDateTime(new Date()),
       ...metaContext,
-      subjectLine: subject || 'N/A',
-      messageBody: content,
+      subjectLine: finalSubject || 'N/A',
+      messageBody: finalContent,
     })
     return
   }
@@ -197,26 +223,26 @@ async function dispatchMessage(context, { user, recipient, subject, content, typ
 
   try {
     if (channel === 'email') {
-      const plainText = content ? content.replace(/<[^>]*>?/gm, '') : ''
+      const plainText = finalContent ? finalContent.replace(/<[^>]*>?/gm, '') : ''
 
       await strapi.plugin('email').service('email').send({
         to: recipient,
-        subject: subject,
+        subject: finalSubject,
         text: plainText,
-        html: content,
+        html: finalContent,
       })
       await recordOutboundAudit(strapi, {
         user,
         action: actionForDispatch({ type, channel, contextMeta }),
         channel,
         recipient,
-        subject,
+        subject: finalSubject,
         messageType: type,
       })
       strapi.log.info(`[LIVE EMAIL SENT] Type: ${type} | To: ${recipient}`)
 
     } else if (channel === 'sms') {
-      const plainText = content ? content.replace(/<[^>]*>?/gm, '') : ''
+      const plainText = finalContent ? finalContent.replace(/<[^>]*>?/gm, '') : ''
       const smsSent = await sendFiretextSms(strapi, {
         recipient,
         message: plainText,
@@ -228,7 +254,7 @@ async function dispatchMessage(context, { user, recipient, subject, content, typ
           action: actionForDispatch({ type, channel, contextMeta }),
           channel,
           recipient,
-          subject,
+          subject: finalSubject,
           messageType: type,
         })
       }
@@ -272,7 +298,7 @@ function formatMessageContent(templateString, user, extraData = {}) {
 }
 
 /**
- * 2. Daily Take Reminders Handler (Fixed Email Recipient Resolution)
+ * 2. Daily Take Reminders Handler (Paginated & safe email resolution)
  */
 async function processDailyTakeReminders(context) {
   const { strapi, today } = context
@@ -316,7 +342,6 @@ async function processDailyTakeReminders(context) {
         if (channel === 'sms') {
           recipient = (reminder.to && !reminder.to.includes('@')) ? reminder.to : (user.mobile || user.phone)
         } else {
-          // Explicitly target email fields for email channels
           recipient = (reminder.to && reminder.to.includes('@')) ? reminder.to : (user.email || null)
         }
 
@@ -362,7 +387,7 @@ async function processDailyTakeReminders(context) {
 }
 
 /**
- * Monthly Reminders Handler (Paginated)
+ * Monthly Reminders Handler (Paginated & safe email resolution)
  */
 async function processMonthlyReminders(context) {
   const { strapi, testUserDocId } = context
@@ -396,12 +421,12 @@ async function processMonthlyReminders(context) {
         const method = (reminder.method || user.contact_preference || 'email').toLowerCase()
         const channel = method === 'sms' ? 'sms' : 'email'
 
-let recipient = null
-if (channel === 'sms') {
-  recipient = (reminder.to && !reminder.to.includes('@')) ? reminder.to : (user.mobile || user.phone)
-} else {
-  recipient = (reminder.to && reminder.to.includes('@')) ? reminder.to : (user.email || null)
-}
+        let recipient = null
+        if (channel === 'sms') {
+          recipient = (reminder.to && !reminder.to.includes('@')) ? reminder.to : (user.mobile || user.phone)
+        } else {
+          recipient = (reminder.to && reminder.to.includes('@')) ? reminder.to : (user.email || null)
+        }
 
         if (!recipient) continue
 
@@ -450,7 +475,7 @@ if (channel === 'sms') {
 }
 
 /**
- * Goal Review Reminders Handler (Paginated)
+ * Goal Review Reminders Handler (Paginated & safe email resolution)
  */
 async function processGoalReminders(context) {
   const { strapi, testUserDocId } = context
