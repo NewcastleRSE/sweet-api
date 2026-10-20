@@ -21,6 +21,70 @@ function isStagingEnvironment() {
 }
 
 /**
+ * Helper to get date and time parts for any Date object in UK time (Europe/London)
+ */
+function getUKParts(date) {
+  const formatter = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'Europe/London',
+    year: 'numeric',
+    month: 'numeric',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: 'numeric',
+    second: 'numeric',
+    hour12: false
+  })
+  const parts = formatter.formatToParts(date)
+  const p = {}
+  for (const part of parts) {
+    p[part.type] = part.value
+  }
+  return {
+    year: parseInt(p.year, 10),
+    month: parseInt(p.month, 10) - 1,
+    day: parseInt(p.day, 10),
+    hour: parseInt(p.hour, 10) === 24 ? 0 : parseInt(p.hour, 10),
+    minute: parseInt(p.minute, 10),
+    second: parseInt(p.second, 10),
+  }
+}
+
+/**
+ * Helper to create an absolute Date object for a specific UK date and time (handles GMT/BST automatically)
+ */
+function createDateInTimeZone(year, month, day, hour, minute, timeZone = 'Europe/London') {
+  const utcDate = new Date(Date.UTC(year, month, day, hour, minute, 0))
+  const formatter = new Intl.DateTimeFormat('en-US', {
+    timeZone,
+    year: 'numeric',
+    month: 'numeric',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: 'numeric',
+    second: 'numeric',
+    hour12: false
+  })
+  
+  const parts = formatter.formatToParts(utcDate)
+  const p = {}
+  for (const part of parts) {
+    p[part.type] = part.value
+  }
+  
+  const tzYear = parseInt(p.year, 10)
+  const tzMonth = parseInt(p.month, 10) - 1
+  const tzDay = parseInt(p.day, 10)
+  const tzHour = parseInt(p.hour, 10) === 24 ? 0 : parseInt(p.hour, 10)
+  const tzMinute = parseInt(p.minute, 10)
+  
+  const targetMs = Date.UTC(year, month, day, hour, minute, 0)
+  const actualMs = Date.UTC(tzYear, tzMonth, tzDay, tzHour, tzMinute, 0)
+  const diff = targetMs - actualMs
+  
+  return new Date(utcDate.getTime() + diff)
+}
+
+/**
  * 1. Fast Minute Processor (Runs every minute - lightweight & optimized)
  */
 export async function runMinuteProcessor(customStrapi = null) {
@@ -35,12 +99,8 @@ export async function runMinuteProcessor(customStrapi = null) {
   isMinuteProcessorRunning = true
 
   try {
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
-
     const context = {
       strapi: activeStrapi,
-      today,
       sendMessages: process.env.SEND_MESSAGES === 'true',
       capturedDispatches: [],
     }
@@ -71,15 +131,12 @@ export async function runBulkProcessor(customStrapi = null) {
   isBulkProcessorRunning = true
 
   try {
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
     const testUserDocId = process.env.TEST_USER_DOCUMENT_ID
     const capturedDispatches = []
     const sendMessages = process.env.SEND_MESSAGES === 'true'
 
     const context = {
       strapi: activeStrapi,
-      today,
       testUserDocId,
       sendMessages,
       capturedDispatches,
@@ -206,16 +263,19 @@ async function dispatchMessage(context, { user, recipient, subject, content, typ
     return
   }
 
-  // Precise Minute Check for Live Production Mode
+  // Precise Minute Check against UK Time (Europe/London)
   const now = new Date()
+  const ukNow = getUKParts(now)
+  const ukScheduled = getUKParts(scheduledDate)
+
   const isDueToday = 
-    scheduledDate.getFullYear() === now.getFullYear() &&
-    scheduledDate.getMonth() === now.getMonth() &&
-    scheduledDate.getDate() === now.getDate()
+    ukScheduled.year === ukNow.year &&
+    ukScheduled.month === ukNow.month &&
+    ukScheduled.day === ukNow.day
 
   const isDueThisMinute = 
-    scheduledDate.getHours() === now.getHours() &&
-    scheduledDate.getMinutes() === now.getMinutes()
+    ukScheduled.hour === ukNow.hour &&
+    ukScheduled.minute === ukNow.minute
 
   if (!isDueToday || !isDueThisMinute) {
     return
@@ -301,11 +361,13 @@ function formatMessageContent(templateString, user, extraData = {}) {
  * 2. Daily Take Reminders Handler (Paginated & safe email resolution)
  */
 async function processDailyTakeReminders(context) {
-  const { strapi, today } = context
+  const { strapi } = context
   const testUserDocId = process.env.TEST_USER_DOCUMENT_ID
 
   const messages = await strapi.documents('api::message.message').findMany()
   const messageMap = new Map(messages.map((m) => [m.type, m]))
+
+  const ukNow = getUKParts(new Date())
 
   const pageSize = 50
   let page = 1
@@ -353,8 +415,13 @@ async function processDailyTakeReminders(context) {
         const timeStr = reminder.time || '08:00'
         const [hours = '8', minutes = '0'] = timeStr.split(':')
 
-        const scheduledDate = new Date(today)
-        scheduledDate.setHours(parseInt(hours, 10), parseInt(minutes, 10), 0, 0)
+        const scheduledDate = createDateInTimeZone(
+          ukNow.year,
+          ukNow.month,
+          ukNow.day,
+          parseInt(hours, 10),
+          parseInt(minutes, 10)
+        )
 
         const formattedHtml = formatMessageContent(msgTemplate.html || '', user)
         const formattedSubject = formatMessageContent(msgTemplate.subject || 'Daily Take Reminder', user)
@@ -436,12 +503,19 @@ async function processMonthlyReminders(context) {
         const baselineDate = new Date(baselineDateStr)
         const freqMonths = reminder.frequency === 'three' ? 3 : reminder.frequency === 'two' ? 2 : 1
 
-        const dueDate = new Date(baselineDate)
-        dueDate.setMonth(dueDate.getMonth() + freqMonths)
+        const dueDateObj = new Date(baselineDate)
+        dueDateObj.setMonth(dueDateObj.getMonth() + freqMonths)
 
         const timeStr = reminder.time || '08:00'
         const [hours = '8', minutes = '0'] = timeStr.split(':')
-        dueDate.setHours(parseInt(hours, 10), parseInt(minutes, 10), 0, 0)
+
+        const dueDate = createDateInTimeZone(
+          dueDateObj.getUTCFullYear(),
+          dueDateObj.getUTCMonth(),
+          dueDateObj.getUTCDate(),
+          parseInt(hours, 10),
+          parseInt(minutes, 10)
+        )
 
         const msgTemplate = messageMap.get(reminder.type)
         if (!msgTemplate) continue
@@ -514,12 +588,19 @@ async function processGoalReminders(context) {
         let recipient = channel === 'sms' ? (user.mobile || user.phone) : (user.email || null)
         if (!recipient) continue
 
-        const reviewDate = new Date(goal.reviewDate)
-        if (isNaN(reviewDate.getTime())) continue
+        const reviewDateObj = new Date(goal.reviewDate)
+        if (isNaN(reviewDateObj.getTime())) continue
 
         const timeStr = goal.time || '09:00'
         const [hours = '9', minutes = '0'] = timeStr.split(':')
-        reviewDate.setHours(parseInt(hours, 10), parseInt(minutes, 10), 0, 0)
+
+        const reviewDate = createDateInTimeZone(
+          reviewDateObj.getUTCFullYear(),
+          reviewDateObj.getUTCMonth(),
+          reviewDateObj.getUTCDate(),
+          parseInt(hours, 10),
+          parseInt(minutes, 10)
+        )
 
         const shortType = goal.goaltype || 'goal'
         const longType = shortType.toLowerCase() === 'activity' ? 'being active' : 'eating healthily'
@@ -578,8 +659,8 @@ async function processInitNudges(context) {
       try {
         if (!user.init || !user.email) continue
 
-        const initDate = new Date(user.init)
-        initDate.setHours(8, 0, 0, 0)
+        const initDateObj = new Date(user.init)
+        if (isNaN(initDateObj.getTime())) continue
 
         const nudgeSchedulePlan = [
           { type: '2_week', daysOffset: 14 },
@@ -595,13 +676,20 @@ async function processInitNudges(context) {
           const msgTemplate = messageMap.get(plan.type)
           if (!msgTemplate) continue
 
-          const targetDate = new Date(initDate)
+          const targetDateObj = new Date(initDateObj)
           if (plan.daysOffset) {
-            targetDate.setDate(targetDate.getDate() + plan.daysOffset)
+            targetDateObj.setUTCDate(targetDateObj.getUTCDate() + plan.daysOffset)
           } else if (plan.monthsOffset) {
-            targetDate.setMonth(targetDate.getMonth() + plan.monthsOffset)
+            targetDateObj.setUTCMonth(targetDateObj.getUTCMonth() + plan.monthsOffset)
           }
-          targetDate.setHours(8, 0, 0, 0)
+
+          const scheduledDate = createDateInTimeZone(
+            targetDateObj.getUTCFullYear(),
+            targetDateObj.getUTCMonth(),
+            targetDateObj.getUTCDate(),
+            8,
+            0
+          )
 
           const formattedHtml = formatMessageContent(msgTemplate.html || '', user)
           const formattedSubject = formatMessageContent(msgTemplate.subject || 'Nudge Update', user)
@@ -613,7 +701,7 @@ async function processInitNudges(context) {
             content: formattedHtml,
             type: `init_nudge_${plan.type}`,
             channel: 'email',
-            scheduledDate: targetDate,
+            scheduledDate,
           })
         }
       } catch (err) {
