@@ -80,7 +80,10 @@ module.exports = {
         confirmed: true,
         blocked: false,
         role: role.id,
-        contact_preference: 'email'
+        contact_preference: 'email',
+        SweetID: registrationCode,
+        init: new Date(),
+        provider: 'local'
       });
 
       // 4. Link the registration code to the new user using Document Service
@@ -91,8 +94,10 @@ module.exports = {
         },
       });
 
+
+
       // 5. Issue a JWT token for the new user so they are instantly logged in
-      const jwt = strapi.plugin('users-permissions').service('jwt').issue({ id: newUser.id });
+      const jwt = await strapi.plugin('users-permissions').service('jwt').issue({ id: newUser.id });
 
       const messages = await strapi.documents('api::message.message').findMany({
         filters: { type: { $in: ['welcome', 'notify_message'] } },
