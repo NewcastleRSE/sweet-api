@@ -5,9 +5,10 @@ import outboundAudit from './outboundAudit.cjs'
 
 const { recordOutboundAudit } = outboundAudit
 
-// Concurrency guards to prevent overlapping runs
+// Concurrency guards and execution queue
 let isMinuteProcessorRunning = false
 let isBulkProcessorRunning = false
+let bulkQueue = Promise.resolve()
 
 /**
  * Helper to detect if running in the Azure Staging environment
@@ -118,47 +119,57 @@ export async function runMinuteProcessor(customStrapi = null) {
 
 /**
  * 2. Heavy Bulk Processor (Runs hourly/daily - sweeps monthly, goals, and init nudges)
+ * Queues execution if a previous run is still in progress so no hours are missed.
  */
 export async function runBulkProcessor(customStrapi = null) {
   const activeStrapi = customStrapi || global.strapi
   if (!activeStrapi) return
 
+  const runTask = async () => {
+    try {
+      const testUserDocId = process.env.TEST_USER_DOCUMENT_ID
+      const capturedDispatches = []
+      const sendMessages = process.env.SEND_MESSAGES === 'true'
+
+      const context = {
+        strapi: activeStrapi,
+        testUserDocId,
+        sendMessages,
+        capturedDispatches,
+      }
+
+      await processMonthlyReminders(context)
+      await processGoalReminders(context)
+      await processInitNudges(context)
+
+      if (!sendMessages && capturedDispatches.length > 0) {
+        const outputPath = path.join(process.cwd(), 'all_test_dispatches.json')
+        await fs.writeFile(outputPath, JSON.stringify(capturedDispatches, null, 2), 'utf-8')
+        activeStrapi.log.info(`[BULK JOB COMPLETE] Wrote ${capturedDispatches.length} simulated dispatches.`)
+      }
+    } catch (error) {
+      activeStrapi.log.error('Critical error in bulk processor:', error)
+      if (typeof Sentry?.captureException === 'function') {
+        Sentry.captureException(error)
+      }
+    }
+  }
+
   if (isBulkProcessorRunning) {
-    activeStrapi.log.warn('[BULK PROCESSOR] Previous bulk run still in progress. Skipping.')
-    return
+    activeStrapi.log.warn('[BULK PROCESSOR] Previous bulk run still in progress. Queuing execution to run immediately after.')
   }
 
-  isBulkProcessorRunning = true
-
-  try {
-    const testUserDocId = process.env.TEST_USER_DOCUMENT_ID
-    const capturedDispatches = []
-    const sendMessages = process.env.SEND_MESSAGES === 'true'
-
-    const context = {
-      strapi: activeStrapi,
-      testUserDocId,
-      sendMessages,
-      capturedDispatches,
+  // Chain the new task onto the execution queue
+  bulkQueue = bulkQueue.then(async () => {
+    isBulkProcessorRunning = true
+    try {
+      await runTask()
+    } finally {
+      isBulkProcessorRunning = false
     }
+  })
 
-    await processMonthlyReminders(context)
-    await processGoalReminders(context)
-    await processInitNudges(context)
-
-    if (!sendMessages && capturedDispatches.length > 0) {
-      const outputPath = path.join(process.cwd(), 'all_test_dispatches.json')
-      await fs.writeFile(outputPath, JSON.stringify(capturedDispatches, null, 2), 'utf-8')
-      activeStrapi.log.info(`[BULK JOB COMPLETE] Wrote ${capturedDispatches.length} simulated dispatches.`)
-    }
-  } catch (error) {
-    activeStrapi.log.error('Critical error in bulk processor:', error)
-    if (typeof Sentry?.captureException === 'function') {
-      Sentry.captureException(error)
-    }
-  } finally {
-    isBulkProcessorRunning = false
-  }
+  return bulkQueue
 }
 
 // Backward compatibility wrapper
